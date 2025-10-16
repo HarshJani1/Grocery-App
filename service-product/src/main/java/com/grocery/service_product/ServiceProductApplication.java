@@ -1,14 +1,14 @@
 package com.grocery.service_product;
 
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-//@SpringBootApplication
-@SpringBootApplication(scanBasePackages = {"controller", "service", "entity"})
-public class ServiceProductApplication {
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
+@SpringBootApplication
+public class ServiceProductApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(ServiceProductApplication.class, args);
 	}
-
 }
