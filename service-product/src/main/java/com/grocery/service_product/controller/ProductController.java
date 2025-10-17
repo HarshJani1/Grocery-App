@@ -46,4 +46,15 @@ public class ProductController {
         Product product = productService.getProduct(id);
         return ResponseEntity.ok(buildResponse("Book fetched successfully", product));
     }
+
+    @PutMapping("/update")
+    public ResponseEntity<Map<String, Object>> updateProduct( @RequestBody Product product) {
+        return ResponseEntity.ok(buildResponse("Product updated successfully", productService.updateProduct(product)));
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<Map<String, Object>> deleteProduct(@PathVariable long id) {
+        productService.deleteProduct(id);
+        return ResponseEntity.ok(buildResponse("Product deleted successfully",null));
+    }
 }
