@@ -2,6 +2,8 @@ package com.grocery.service_user.controller;
 
 import com.grocery.service_user.entity.User;
 import com.grocery.service_user.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -9,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 @RestController
 @RequestMapping("/users")
 public class UserController {
@@ -29,22 +30,10 @@ public class UserController {
     }
 
     // ✅ CREATE USER
-    @PostMapping("/create")
-    public ResponseEntity<Map<String, Object>> create(@RequestBody User user) {
-        try {
-            User saved = userService.addUser(user);
-            return ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .body(buildResponse("success", "User created successfully", saved));
-        } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(buildResponse("error", "Failed to create user: " + e.getMessage(), null));
-        }
-    }
+
 
     // ✅ GET ALL USERS
-    @GetMapping
+    @GetMapping("/get")
     public ResponseEntity<Map<String, Object>> getAllUsers() {
         try {
             List<User> users = userService.getUsers();
@@ -56,6 +45,11 @@ public class UserController {
                     .body(buildResponse("error", "Failed to fetch users: " + e.getMessage(), null));
         }
     }
+
+//    @GetMapping("/csrf")
+//    public String getCSRF(HttpServletRequest request) {
+//        return ""+request.getAttribute("_csrf");
+//    }
 
     // ✅ GET USER BY ID
     @GetMapping("/{id}")

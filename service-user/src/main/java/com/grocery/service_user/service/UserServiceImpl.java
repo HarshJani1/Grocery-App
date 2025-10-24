@@ -12,8 +12,6 @@ import java.util.Map;
 @Service
 public class UserServiceImpl implements UserService {
 
-
-
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     UserRepository userRepository;
@@ -21,11 +19,7 @@ public class UserServiceImpl implements UserService {
         this.userRepository = userRepository;
     }
 
-    @Override
-    public User addUser(User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return userRepository.save(user);
-    }
+
 
     @Override
     public List<User> getUsers() {
