@@ -20,16 +20,12 @@ spring:
           uri: lb://SERVICE-AUTH
           predicates:
             - Path=/service-auth/**
-          filters:
-            - AuthenticationFilter
 
         # === USER SERVICE ===
         - id: user-service
           uri: lb://SERVICE-USER
           predicates:
             - Path=/service-user/**
-          filters:
-            - AuthenticationFilter
 
       # Optional: tweak timeouts to avoid random 403 / AsynchronousCloseException
       httpclient:
