@@ -1,0 +1,63 @@
+server:
+  port: 8765
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      # Enable discovery through Eureka
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+
+      # Define routes manually (explicitly defined for clarity)
+      routes:
+        # === AUTH SERVICE ===
+        - id: auth-service
+          uri: lb://SERVICE-AUTH
+          predicates:
+            - Path=/service-auth/**
+          filters:
+            - AuthenticationFilter
+
+        # === USER SERVICE ===
+        - id: user-service
+          uri: lb://SERVICE-USER
+          predicates:
+            - Path=/service-user/**
+          filters:
+            - AuthenticationFilter
+
+      # Optional: tweak timeouts to avoid random 403 / AsynchronousCloseException
+      httpclient:
+        connect-timeout: 10000
+        response-timeout: 10s
+
+  main:
+    allow-bean-definition-overriding: true
+
+# Eureka client configuration
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+
+# Logging configuration (optional but useful)
+logging:
+  level:
+    org.springframework.security: DEBUG
+    com.grocery.api_gateway: DEBUG
+
+
+# === CORS ===
+# You can fine-tune this to your frontend port (e.g., 3000)
+# so that browser POSTs and JWT headers pass cleanly
+cors:
+  allowed-origins: "*"
+  allowed-methods: "GET,POST,PUT,DELETE,OPTIONS"
+  allowed-headers: "*"
