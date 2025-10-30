@@ -27,6 +27,12 @@ spring:
           predicates:
             - Path=/service-user/**
 
+        # === PRODUCT SERVICE ===
+        - id: product-service
+          uri: lb://SERVICE-PRODUCT
+          predicates:
+            - Path=/service-product/**
+
       # Optional: tweak timeouts to avoid random 403 / AsynchronousCloseException
       httpclient:
         connect-timeout: 10000

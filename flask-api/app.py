@@ -71,7 +71,7 @@ def _build_cors_preflight_response():
     response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
     return response
 
-@app.route('products/analyze', methods=['POST', 'OPTIONS'])
+@app.route('/products/analyze', methods=['POST', 'OPTIONS'])
 def analyze_sentiment():
     if request.method == 'OPTIONS':
         return _build_cors_preflight_response()
@@ -135,7 +135,7 @@ except Exception as e:
     logger.error(f"Error loading recommendation data/model: {str(e)}")
     rules = pd.DataFrame()
 
-@app.route("products/recommend/<product>", methods=["GET"])
+@app.route("/products/recommend/<product>", methods=["GET"])
 def recommend(product):
     if rules.empty:
         return jsonify({"error": "Recommendation model not loaded"}), 500
