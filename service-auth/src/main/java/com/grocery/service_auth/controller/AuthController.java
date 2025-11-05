@@ -32,10 +32,10 @@ public class AuthController {
     @PostMapping("/token")
     public ResponseEntity<ApiResponse<String>> generateToken(@RequestBody AuthRequest authRequest) {
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword()));
+                new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword()));
 
         if (authentication.isAuthenticated()) {
-            String token = service.generateToken(authRequest.getUsername());
+            String token = service.generateToken(authRequest.getEmail());
             return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "Token generated successfully", token));
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
