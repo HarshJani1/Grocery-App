@@ -13,6 +13,8 @@ public class RouteValidator {
 
             "/auth/token",
             "/auth/register",
+            "service-auth/register",
+            "service-auth/token",
             "/eureka"
     );
 

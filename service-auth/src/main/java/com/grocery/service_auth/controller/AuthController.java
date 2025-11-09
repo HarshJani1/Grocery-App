@@ -31,16 +31,17 @@ public class AuthController {
 
     @PostMapping("/token")
     public ResponseEntity<ApiResponse<String>> generateToken(@RequestBody AuthRequest authRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword()));
+       
+           Authentication authentication = authenticationManager.authenticate(
+                   new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword()));
 
-        if (authentication.isAuthenticated()) {
-            String token = service.generateToken(authRequest.getEmail());
-            return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "Token generated successfully", token));
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponse<>(HttpStatus.UNAUTHORIZED, "Invalid username or password", null));
-        }
+           if (authentication.isAuthenticated()) {
+               String token = service.generateToken(authRequest.getEmail());
+               return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "Token generated successfully", token));
+           } else {
+               return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                       .body(new ApiResponse<>(HttpStatus.UNAUTHORIZED, "Invalid username or password", null));
+           }
     }
 
     @GetMapping("/validate")
