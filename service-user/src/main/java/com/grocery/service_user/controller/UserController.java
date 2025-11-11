@@ -2,8 +2,6 @@ package com.grocery.service_user.controller;
 
 import com.grocery.service_user.entity.User;
 import com.grocery.service_user.service.UserService;
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 @RestController
 @RequestMapping("/users")
 public class UserController {
@@ -29,10 +28,7 @@ public class UserController {
         return body;
     }
 
-    // ✅ CREATE USER
-
-
-    // ✅ GET ALL USERS
+    // GET ALL USERS
     @GetMapping("/get")
     public ResponseEntity<Map<String, Object>> getAllUsers() {
         try {
@@ -46,12 +42,7 @@ public class UserController {
         }
     }
 
-//    @GetMapping("/csrf")
-//    public String getCSRF(HttpServletRequest request) {
-//        return ""+request.getAttribute("_csrf");
-//    }
-
-    // ✅ GET USER BY ID
+    // GET USER BY ID
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getUserById(@PathVariable long id) {
         try {
@@ -70,7 +61,7 @@ public class UserController {
         }
     }
 
-    // ✅ UPDATE USER
+    // UPDATE USER
     @PutMapping("/update")
     public ResponseEntity<Map<String, Object>> updateUser(@RequestBody User user) {
         try {
@@ -84,7 +75,7 @@ public class UserController {
         }
     }
 
-    // ✅ DELETE USER
+    // DELETE USER
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Map<String, Object>> deleteUser(@PathVariable long id) {
         try {
@@ -101,4 +92,6 @@ public class UserController {
                     .body(buildResponse("error", "Failed to delete user: " + e.getMessage(), null));
         }
     }
+
+
 }

@@ -38,7 +38,8 @@ public class UserServiceImpl implements UserService {
             user.setUsername(product.getUsername());
             user.setPassword(product.getPassword());
             user.setEmail(product.getEmail());
-            user.setPhone(product.getPhone());
+            user.setPhoneNumber(product.getPhoneNumber());
+            user.setAddress(product.getAddress());
             return userRepository.save(user);
         }
         return null;

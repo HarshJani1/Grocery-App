@@ -31,7 +31,7 @@ public class AuthController {
 
     @PostMapping("/token")
     public ResponseEntity<ApiResponse<String>> generateToken(@RequestBody AuthRequest authRequest) {
-       
+
            Authentication authentication = authenticationManager.authenticate(
                    new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword()));
 
