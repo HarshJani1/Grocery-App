@@ -5,43 +5,58 @@ spring:
   application:
     name: api-gateway
 
+  main:
+    allow-bean-definition-overriding: true
+
+  profiles:
+    active: local
+
   cloud:
     gateway:
-      # Enable discovery through Eureka
+      # Global CORS config (use allowedOriginPatterns when allowCredentials=true)
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOriginPatterns:
+              - "http://localhost:4200"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+              - PATCH
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+            maxAge: 1800
+
+      # Service discovery (Eureka) locator
       discovery:
         locator:
           enabled: true
           lower-case-service-id: true
 
-      # Define routes manually (explicitly defined for clarity)
+      # Routes for downstream services
       routes:
-        # === AUTH SERVICE ===
         - id: auth-service
           uri: lb://SERVICE-AUTH
           predicates:
             - Path=/service-auth/**
-
-        # === USER SERVICE ===
         - id: user-service
           uri: lb://SERVICE-USER
           predicates:
             - Path=/service-user/**
-
-        # === PRODUCT SERVICE ===
         - id: product-service
           uri: lb://SERVICE-PRODUCT
           predicates:
             - Path=/service-product/**
 
-      # Optional: tweak timeouts to avoid random 403 / AsynchronousCloseException
+      # HTTP client timeouts
       httpclient:
         connect-timeout: 10000
         response-timeout: 10s
 
-  main:
-    allow-bean-definition-overriding: true
-
-# Eureka client configuration
 eureka:
   client:
     service-url:
@@ -49,17 +64,15 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
 
-# Logging configuration (optional but useful)
 logging:
   level:
+    root: INFO
     org.springframework.security: DEBUG
     com.grocery.api_gateway: DEBUG
+    org.springframework.web.cors: DEBUG
 
-
-# === CORS ===
-# You can fine-tune this to your frontend port (e.g., 3000)
-# so that browser POSTs and JWT headers pass cleanly
-cors:
-  allowed-origins: "*"
-  allowed-methods: "GET,POST,PUT,DELETE,OPTIONS"
-  allowed-headers: "*"
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,env

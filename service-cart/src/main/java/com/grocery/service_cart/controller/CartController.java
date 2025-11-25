@@ -22,7 +22,7 @@ public class CartController {
         this.cartService = cartService;
     }
 
-    private Map<String, Object> buildResponse(String status, String message, Object data) {
+    private Map<String, Object> buildResponse(HttpStatus status, String message, Object data) {
         Map<String, Object> body = new HashMap<>();
         body.put("status", status);
         body.put("message", message);
@@ -37,16 +37,16 @@ public class CartController {
 
             List<CartItem> items = cartService.listItems(id);
             return ResponseEntity
-                    .ok(buildResponse("success", "cart fetched", items));
+                    .ok(buildResponse(HttpStatus.OK, "cart fetched", items));
 
         }catch (IllegalArgumentException e) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
-                    .body(buildResponse("error", "User not found", null));
+                    .body(buildResponse(HttpStatus.NOT_FOUND, "User not found", null));
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(buildResponse("error", "Failed to delete user: " + e.getMessage(), null));
+                    .body(buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete user: " + e.getMessage(), null));
         }
     }
 
@@ -54,14 +54,14 @@ public class CartController {
     public ResponseEntity<Map<String, Object>> addItem(@RequestBody AddItemRequest addItemDTO) {
              cartService.addItemToCart(addItemDTO.getUserId(),addItemDTO.getProductName(),addItemDTO.getQuantity());
          return ResponseEntity
-                 .ok(buildResponse("success", "item added to cart", null));
+                 .ok(buildResponse(HttpStatus.OK, "item added to cart", null));
     }
 
     @DeleteMapping("/delete")
     public ResponseEntity<Map<String,Object>> deleteItem(@RequestBody DeleteItemRequest deleteItemRequest){
         cartService.removeItemFromCart(deleteItemRequest.getUserId(), deleteItemRequest.getProductName());
         return ResponseEntity
-                .ok(buildResponse("success", "item deleted successfully", null));
+                .ok(buildResponse(HttpStatus.OK, "item deleted successfully", null));
 
     }
 }

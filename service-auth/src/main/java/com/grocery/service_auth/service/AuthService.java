@@ -2,7 +2,6 @@ package com.grocery.service_auth.service;
 
 import com.grocery.service_auth.entity.User;
 import com.grocery.service_auth.repository.UserCredentialRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +11,7 @@ public class AuthService {
     private UserCredentialRepository repository;
     private PasswordEncoder passwordEncoder;
     private JwtService jwtService;
+
     public AuthService(UserCredentialRepository repository, PasswordEncoder passwordEncoder, JwtService jwtService) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;

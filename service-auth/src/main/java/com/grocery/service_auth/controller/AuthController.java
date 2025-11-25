@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
+
 public class AuthController {
 
     @Autowired
@@ -21,27 +22,34 @@ public class AuthController {
 
     @Autowired
     private AuthenticationManager authenticationManager;
+    @Autowired
+    private AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<String>> registerUser(@RequestBody User user) {
-        String result = service.saveUser(user);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponse<>(HttpStatus.CREATED, "User registered successfully", result));
+    public ResponseEntity<?> registerUser(@RequestBody User user) {
+        try {
+            String result = service.saveUser(user);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(new ApiResponse<>(HttpStatus.CREATED, "User registered successfully", result));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong", e.getMessage()));
+        }
     }
 
     @PostMapping("/token")
     public ResponseEntity<ApiResponse<String>> generateToken(@RequestBody AuthRequest authRequest) {
 
-           Authentication authentication = authenticationManager.authenticate(
-                   new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword()));
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword()));
 
-           if (authentication.isAuthenticated()) {
-               String token = service.generateToken(authRequest.getEmail());
-               return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "Token generated successfully", token));
-           } else {
-               return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                       .body(new ApiResponse<>(HttpStatus.UNAUTHORIZED, "Invalid username or password", null));
-           }
+        if (authentication.isAuthenticated()) {
+            String token = service.generateToken(authRequest.getEmail());
+            return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "Token generated successfully", token));
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse<>(HttpStatus.UNAUTHORIZED, "Invalid username or password", null));
+        }
     }
 
     @GetMapping("/validate")
