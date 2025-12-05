@@ -1,0 +1,59 @@
+/* Add this to your AdminPanel.css or ProductForm.css */
+.product-form {
+    background-color: var(--card-bg);
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 600px;
+    margin: 0 auto 40px auto;
+    animation: fadeInUp 0.7s ease;
+  }
+  
+  .product-form input,
+  .product-form textarea {
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background-color: #38384a;
+    color: var(--text-color);
+    font-size: 16px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+  }
+  
+  .product-form input::placeholder,
+  .product-form textarea::placeholder {
+    color: var(--muted);
+  }
+  
+  .product-form input:focus,
+  .product-form textarea:focus {
+    background-color: #44445a;
+    outline: none;
+    transform: scale(1.02);
+  }
+  
+  .product-form textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+  
+  .product-form button {
+    align-self: flex-end;
+    padding: 12px 20px;
+    font-size: 16px;
+    background-color: var(--accent);
+    color: var(--text-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+  }
+  
+  .product-form button:hover {
+    background-color: #574bff;
+    transform: scale(1.05);
+  }
+  

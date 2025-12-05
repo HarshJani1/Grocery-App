@@ -1,0 +1,80 @@
+.contact-us-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 4rem 1rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #0f1123;
+    color: #f4f4f4;
+    border-radius: 12px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+  }
+  
+  .contact-us-container h1 {
+    font-size: 2.5rem;
+    text-align: center;
+    color: #ff6ec7;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #ff6ec7;
+    padding-bottom: 0.5rem;
+  }
+  
+  .contact-section {
+    margin-bottom: 1.5rem;
+    background-color: #1c1f3c;
+    padding: 1.5rem;
+    border-radius: 10px;
+    transition: transform 0.3s ease;
+  }
+  
+  .contact-section:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(255, 110, 199, 0.3);
+  }
+  
+  .contact-section h2 {
+    color: #ffb6ff;
+    font-size: 1.6rem;
+    margin-bottom: 0.5rem;
+    border-left: 4px solid #ff6ec7;
+    padding-left: 0.5rem;
+  }
+  
+  .contact-form-section form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background-color: #1c1f3c;
+    padding: 1.5rem;
+    border-radius: 10px;
+  }
+  
+  .contact-form-section input,
+  .contact-form-section textarea {
+    padding: 0.75rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    background-color: #2c2f4a;
+    color: #f4f4f4;
+  }
+  
+  .contact-form-section input::placeholder,
+  .contact-form-section textarea::placeholder {
+    color: #aaa;
+  }
+  
+  .contact-form-section button {
+    padding: 0.75rem;
+    background-color: #ff6ec7;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .contact-form-section button:hover {
+    background-color: #ff4db8;
+  }
+  
