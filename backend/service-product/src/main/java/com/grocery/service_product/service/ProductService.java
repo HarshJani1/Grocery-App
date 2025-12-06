@@ -27,6 +27,8 @@ public class ProductService implements ProService {
     @Override
     public Product updateProduct(Product product) {
         Product oldProduct = getProduct(product.getId());
+        oldProduct.setImageType(product.getImageType());
+        oldProduct.setImage(product.getImage());
         oldProduct.setName(product.getName());
         oldProduct.setPrice(product.getPrice());
         oldProduct.setDescription(product.getDescription());

@@ -12,11 +12,36 @@ const FullPage = () => {
   const { id } = useParams();
 
   const [product, setProduct] = useState(null);
+  const [imageUrl, setImageUrl] = useState([]);
   const [productList, setProductList] = useState([]);
   const [recommended, setRecommended] = useState([]);
 
   useEffect(() => {
     if (!token) return;
+
+    const fetchImage = async () => {
+            try {
+                const res = await axios.get(
+                    `http://localhost:8765/service-product/products/getImage/${id}`,
+                    {
+                        responseType: "blob",
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+
+                const url = URL.createObjectURL(res.data);
+                setImageUrl(url);
+            } catch (e) {
+                console.error("Error fetching image:", e);
+            }
+        };
+
+
+        fetchImage();
+
+
 
     const fetchProduct = async () => {
       try {
@@ -69,6 +94,17 @@ const FullPage = () => {
       <Navbar />
       <div className="fullpage-container">
         <div>
+          <img
+                    src={imageUrl}
+                    alt={product.name}
+                    style={{
+                      width: "50%",
+                      height: "10%",
+                      objectFit: "cover",
+                      padding: "10px",
+                      margin: "12%",
+                    }}
+                  />
           <section className="mb-12 pt-16">
             <h1 className="text-3xl font-bold text-violet-400 mb-2">{product.name}</h1>
             <h4 className="text-lg text-gray-300 mb-4">{product.description}</h4>

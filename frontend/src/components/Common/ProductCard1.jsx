@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { Link } from 'react-router-dom';
 import './ProductCard1.css';
@@ -12,6 +12,64 @@ const ProductCard1 = ({ product }) => {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const token = user?.token;
+
+  const [imageUrl, setImageUrl] = useState(null);
+  const urlRef = useRef(null);
+
+  useEffect(() => {
+    if (!product?.id || !token) {
+      // clean up if token missing or product absent
+      if (urlRef.current) {
+        try { URL.revokeObjectURL(urlRef.current); } catch (_) {}
+        urlRef.current = null;
+      }
+      setImageUrl(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchImage = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:8765/service-product/products/getImage/${product.id}`,
+          {
+            responseType: "blob",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (cancelled) return;
+
+        const url = URL.createObjectURL(res.data);
+
+        // revoke previous
+        if (urlRef.current) {
+          try { URL.revokeObjectURL(urlRef.current); } catch (_) {}
+        }
+
+        urlRef.current = url;
+        setImageUrl(url);
+      } catch (e) {
+        if (!cancelled) {
+          console.error(`Error fetching image for product ${product.id}:`, e);
+          setImageUrl(null);
+        }
+      }
+    };
+
+    fetchImage();
+
+    return () => {
+      cancelled = true;
+      if (urlRef.current) {
+        try { URL.revokeObjectURL(urlRef.current); } catch (_) {}
+        urlRef.current = null;
+      }
+    };
+  }, [product?.id, token]);
 
   const handleSubmit = async (id) => {
     if (!review.trim()) return;
@@ -47,6 +105,18 @@ const ProductCard1 = ({ product }) => {
 
   return (
     <div className="product-card">
+      <div className="images">
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={product?.name ?? `product-${product?.id}`}
+            style={{ width: "100%", maxHeight: 220, objectFit: "cover" }}
+          />
+        ) : (
+          <div className="image-placeholder">Loading image...</div>
+        )}
+      </div>
+
       <Link
         key={product.id}
         to={`/product/${product.id}`}
@@ -54,6 +124,7 @@ const ProductCard1 = ({ product }) => {
       >
         <h2>{product.name}</h2>
       </Link>
+
       <p className="description">{product.description}</p>
       <div className="price">${product.price}</div>
 

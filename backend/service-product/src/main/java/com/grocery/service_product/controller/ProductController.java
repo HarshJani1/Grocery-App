@@ -1,5 +1,6 @@
 package com.grocery.service_product.controller;
 
+import com.grocery.service_product.DTO.ImageResponse;
 import com.grocery.service_product.entity.Product;
 import com.grocery.service_product.service.ProductService;
 import org.springframework.http.HttpStatus;
@@ -9,9 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/products")
@@ -58,6 +58,7 @@ public class ProductController {
             p.setDislike(0L);
 
             if (image != null && !image.isEmpty()) {
+                p.setImageType(image.getContentType());
                 p.setImage(image.getBytes());
             }
 
@@ -142,4 +143,20 @@ public class ProductController {
                     .body(buildResponse("error", "Failed to delete product: " + e.getMessage(), null));
         }
     }
+
+    @GetMapping("/getImage/{id}")
+    public ResponseEntity<byte[]> getImage(@PathVariable long id) {
+        Product product = productService.getProduct(id);
+
+        if (product == null || product.getImage() == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.valueOf(product.getImageType()))
+                .body(product.getImage());
+    }
+
+
+
 }

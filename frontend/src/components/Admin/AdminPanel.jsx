@@ -23,7 +23,7 @@ const AdminPanel = () => {
         );
         const payload = res?.data?.data ?? res?.data ?? [];
         setProducts(Array.isArray(payload) ? payload : []);
-    console.log(res.data.data);
+        console.log(res.data.data);
       } catch (error) {
         console.error('Error fetching products (AdminPanel):', error);
       }
@@ -50,7 +50,6 @@ const AdminPanel = () => {
       );
 
       setProducts(prev => prev.filter(p => p.id !== id));
-      
     } catch (error) {
       console.error('Error deleting product:', error);
     }
@@ -101,6 +100,7 @@ const AdminPanel = () => {
             });
             const payload = res?.data?.data ?? res?.data ?? [];
             setProducts(Array.isArray(payload) ? payload : []);
+            console.log(res);
           } catch (err) {
             console.error('fetchProducts (ProductForm callback):', err);
           }
@@ -112,6 +112,7 @@ const AdminPanel = () => {
       <div className="products-grid">
         {products.map((product) => (
           <div key={product.id} className="admin-product-card">
+            <div class="images"></div>
             <ProductCard product={product} />
             <div className="admin-actions">
               <button

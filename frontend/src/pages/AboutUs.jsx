@@ -1,8 +1,22 @@
 import React from 'react';
 import './AboutUs.css';
+import axios from 'axios';
 import Navbar from '../components/Common/Navbar';
+import { useEffect, useState } from 'react';
 
+import { useAuth } from '../context/AuthContext';
 const AboutUs = () => {
+    const { user } = useAuth();
+    const token = user?.token ?? null;
+
+    const id = 1;
+
+    useEffect(() => {
+        if (!token || !id) return;
+
+        
+    }, [token, id]);
+
     return (
         <div>
             <Navbar />

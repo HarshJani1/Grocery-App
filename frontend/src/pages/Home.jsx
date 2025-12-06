@@ -29,7 +29,6 @@ const Home = () => {
         console.error("Failed to fetch products:", error);
       }
     };
-
     fetchProducts();
   }, [token]);
 

@@ -1,11 +1,9 @@
-
 package com.grocery.service_product.entity;
 
 import jakarta.persistence.*;
 import lombok.Builder;
 
 import java.math.BigDecimal;
-
 
 @Entity
 @Builder
@@ -16,10 +14,10 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 200,name="NAME")
+    @Column(nullable = false, length = 200, name="NAME")
     private String name;
 
-    @Column(nullable = false,name="DESCRIPTION")
+    @Column(nullable = false, name="DESCRIPTION")
     private String description;
 
     @Column(name="LIKES")
@@ -31,14 +29,19 @@ public class Product {
     @Column(name="PRICE")
     private BigDecimal price;
 
-    @Column(name="IMAGE",length = 16777215)
+    @Column(name="IMAGE", length = 16777215)
     private byte[] image;
 
-    // Default constructor required by Jackson
+    @Column(name="IMAGE_TYPE", length = 50)
+    private String imageType;
+
+
+
+
     public Product() {}
 
-    // All-args constructor for convenience
-    public Product(Long id, String name, String description, Long like, Long dislike, BigDecimal price,byte[] image) {
+    public Product(Long id, String name, String description, Long like, Long dislike,
+                   BigDecimal price, byte[] image, String imageType) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -46,6 +49,7 @@ public class Product {
         this.dislikes = dislike;
         this.price = price;
         this.image = image;
+        this.imageType = imageType;
     }
 
     @Override
@@ -57,25 +61,32 @@ public class Product {
                 ", like=" + likes +
                 ", dislike=" + dislikes +
                 ", price=" + price +
-                ", image=" + image +
+                ", imageType='" + imageType + '\'' +
                 '}';
     }
 
-    // Getters and setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
     public Long getLike() { return likes; }
     public void setLike(Long like) { this.likes = like; }
+
     public Long getDislike() { return dislikes; }
     public void setDislike(Long dislike) { this.dislikes = dislike; }
+
     public BigDecimal getPrice() { return price; }
     public void setPrice(BigDecimal price) { this.price = price; }
+
     public byte[] getImage() { return image; }
     public void setImage(byte[] image) { this.image = image; }
+
+    public String getImageType() { return imageType; }
+    public void setImageType(String imageType) { this.imageType = imageType; }
+
 }
-
-
