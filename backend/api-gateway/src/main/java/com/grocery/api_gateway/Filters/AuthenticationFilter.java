@@ -5,6 +5,8 @@ import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.server.ServletServerHttpRequest;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -22,9 +24,10 @@ public class AuthenticationFilter implements GlobalFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, org.springframework.cloud.gateway.filter.GatewayFilterChain chain) {
-        String path = exchange.getRequest().getURI().getPath();
+//        String path = exchange.getRequest().getURI().getPath();
+        ServerHttpRequest request = null;
         boolean secured = validator.isSecured.test(exchange.getRequest());
-        System.out.println("AuthenticationFilter - Path:" + path + " | isSecured: " + secured);
+//        System.out.println("AuthenticationFilter - Path:" + path + " | isSecured: " + secured);
 
         // ALLOW preflight through without auth
         if (HttpMethod.OPTIONS.equals(exchange.getRequest().getMethod())) {
@@ -42,8 +45,15 @@ public class AuthenticationFilter implements GlobalFilter {
                 authHeader = authHeader.substring(7);
             }
 
+
+
             try {
                 jwtUtil.validateToken(authHeader);
+
+                request = exchange.getRequest()
+                        .mutate()
+                        .header("Email",jwtUtil.extractEmail(authHeader))
+                        .build();
             } catch (Exception e) {
                 System.out.println("Invalid access token: " + e.getMessage());
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
@@ -51,6 +61,6 @@ public class AuthenticationFilter implements GlobalFilter {
             }
         }
 
-        return chain.filter(exchange);
+        return chain.filter(exchange.mutate().request(request).build());
     }
 }
