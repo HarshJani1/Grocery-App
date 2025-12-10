@@ -15,7 +15,7 @@ public class Cart {
     private Long id;
 
     @Column(nullable = false, length = 100)
-    private Long userId;
+    private String email;
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
@@ -23,9 +23,10 @@ public class Cart {
 
     public Cart() {}
 
-    public Cart(Long id, Long userId, List<CartItem> items) {
+
+    public Cart(Long id, String email, List<CartItem> items) {
         this.id = id;
-        this.userId = userId;
+        this.email = email;
         this.items = items;
     }
 
@@ -37,20 +38,18 @@ public class Cart {
         this.id = id;
     }
 
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
     public List<CartItem> getItems() {
         return items;
     }
 
     public void setItems(List<CartItem> items) {
         this.items = items;
+    }
+    public String getEmail() {
+        return email;
+    }
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public void addItem(CartItem item) {

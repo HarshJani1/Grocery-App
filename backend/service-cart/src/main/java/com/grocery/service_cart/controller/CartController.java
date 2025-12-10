@@ -31,11 +31,11 @@ public class CartController {
         return body;
     }
 
-    @GetMapping("/get/{id}")
-    public ResponseEntity<Map<String, Object>> getUserCart(@PathVariable long id) {
+    @GetMapping("/get")
+    public ResponseEntity<Map<String, Object>> getUserCart(@RequestHeader String email) {
         try{
 
-            List<CartItem> items = cartService.listItems(id);
+            List<CartItem> items = cartService.listItems(email);
             return ResponseEntity
                     .ok(buildResponse(HttpStatus.OK, "cart fetched", items));
 
@@ -51,17 +51,22 @@ public class CartController {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<Map<String, Object>> addItem(@RequestBody AddItemRequest addItemDTO) {
-             cartService.addItemToCart(addItemDTO.getUserId(),addItemDTO.getProductName(),addItemDTO.getQuantity());
+    public ResponseEntity<Map<String, Object>> addItem(@RequestBody AddItemRequest addItemDTO,@RequestHeader String email) {
+             cartService.addItemToCart(email,addItemDTO.getProductName(),addItemDTO.getQuantity());
          return ResponseEntity
                  .ok(buildResponse(HttpStatus.OK, "item added to cart", null));
     }
 
     @DeleteMapping("/delete")
-    public ResponseEntity<Map<String,Object>> deleteItem(@RequestBody DeleteItemRequest deleteItemRequest){
-        cartService.removeItemFromCart(deleteItemRequest.getUserId(), deleteItemRequest.getProductName());
+    public ResponseEntity<Map<String,Object>> deleteItem(@RequestBody DeleteItemRequest deleteItemRequest,@RequestHeader String email){
+        cartService.removeItemFromCart(email, deleteItemRequest.getProductName());
         return ResponseEntity
                 .ok(buildResponse(HttpStatus.OK, "item deleted successfully", null));
 
     }
+
+
+
+
+
 }

@@ -12,61 +12,60 @@ import java.util.Optional;
 @Service
 public class CartServiceImpl implements CartService {
 
-    CartRepository cartRepository;
-    CartItemService cartItemService;
-    public CartServiceImpl(CartRepository cartRepository,CartItemService cartItemService) {
+    private final CartRepository cartRepository;
+    private final CartItemService cartItemService;
+
+    public CartServiceImpl(CartRepository cartRepository, CartItemService cartItemService) {
         this.cartRepository = cartRepository;
         this.cartItemService = cartItemService;
     }
 
     @Override
-    public Cart createCartForUser(Long userId) {
+    public Cart createCartForUser(String email) {
         Cart cart = new Cart();
-        cart.setUserId(userId);
+        cart.setEmail(email);
         return cartRepository.save(cart);
     }
 
     @Override
-    public Optional<Cart> getCartById(Integer cartId) {
+    public Optional<Cart> getCartById(Long cartId) {
         return cartRepository.findById(cartId);
     }
 
     @Override
-    public Optional<Cart> getCartByUserId(Long userId) {
-        return cartRepository.findByUserId(userId);
+    public Optional<Cart> getCartByUserEmail(String email) {
+        return cartRepository.findByEmail(email);
     }
 
     @Override
-    public Cart addItemToCart(Long userId, String productName, int quantity) {
-        Cart cart = getCartByUserId(userId)
-                .orElseGet(() -> createCartForUser(userId));
+    public Cart addItemToCart(String email, String productName, int quantity) {
+        Cart cart = getCartByUserEmail(email)
+                .orElseGet(() -> createCartForUser(email));
 
-        // check if product already in cart
         CartItem existing = cart.getItems().stream()
-                .filter(i -> i.getProductName().equals(productName))
+                .filter(i -> i.getName().equalsIgnoreCase(productName))
                 .findFirst()
                 .orElse(null);
 
         if (existing != null) {
             existing.setQuantity(existing.getQuantity() + quantity);
         } else {
-            CartItem newItem = new CartItem();
-            newItem.setProductName(productName);
+            CartItem newItem = cartItemService.createCartItem(productName, quantity);
             newItem.setQuantity(quantity);
-            cart.addItem(newItem);
-            // links both sides
+            cart.addItem(newItem); // addItem will set cart on item
         }
 
         return cartRepository.save(cart);
     }
 
+
     @Override
-    public Cart updateItemQuantity(Long userId,String productName, int quantity) {
-        Cart cart = getCartByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Cart not found for user: " + userId));
+    public Cart updateItemQuantity(String email, String productName, int quantity) {
+        Cart cart = getCartByUserEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Cart not found for user: " + email));
 
         CartItem target = cart.getItems().stream()
-                .filter(i -> i.getProductName().equals(productName))
+                .filter(i -> i.getName().equalsIgnoreCase(productName))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("CartItem not found: " + productName));
 
@@ -81,12 +80,12 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public Cart removeItemFromCart(Long userId, String productName) {
-        Cart cart = getCartByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Cart not found for user: " + userId));
+    public Cart removeItemFromCart(String email, String productName) {
+        Cart cart = getCartByUserEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Cart not found for user: " + email));
 
         CartItem target = cart.getItems().stream()
-                .filter(i -> i.getProductName().equals(productName))
+                .filter(i -> i.getName().equalsIgnoreCase(productName))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("CartItem not found: " + productName));
 
@@ -95,18 +94,18 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public Cart clearCart(Long userId) {
-        Cart cart = getCartByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Cart not found for user: " + userId));
+    public Cart clearCart(String email) {
+        Cart cart = getCartByUserEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Cart not found for user: " + email));
 
         cart.getItems().clear();
         return cartRepository.save(cart);
     }
 
     @Override
-    public List<CartItem> listItems(Long userId) {
-        Cart cart = getCartByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Cart not found for user: " + userId));
+    public List<CartItem> listItems(String email) {
+        Cart cart = getCartByUserEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Cart not found for user: " + email));
 
         return cart.getItems();
     }

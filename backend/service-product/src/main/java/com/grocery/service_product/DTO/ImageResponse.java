@@ -12,13 +12,6 @@ public class ImageResponse {
     private String imageBase64;
     private String imageType;
 
-    public ImageResponse(String imageBase64, String imageType) {
-        this.imageBase64 = imageBase64;
-        this.imageType = imageType;
-    }
-
-    public ImageResponse() {}
-
     public String getImageBase64() {
         return imageBase64;
     }

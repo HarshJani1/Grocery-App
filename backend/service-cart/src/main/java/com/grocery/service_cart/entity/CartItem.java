@@ -11,10 +11,16 @@ public class CartItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
-    @Column(nullable = false)
-    private String productName;
+    @Column(nullable = false, length = 200, name="NAME")
+    private String name;
+
+    @Column(nullable = false, name="DESCRIPTION")
+    private String description;
+
+    @Column(name="PRICE")
+    private BigDecimal price;
 
     @Column(nullable = false)
     private Integer quantity;
@@ -26,27 +32,46 @@ public class CartItem {
 
     public CartItem(){}
 
-    public CartItem(Integer id, String productName, Integer quantity, Cart cart) {
+
+    public CartItem(Long id, String name, String description, BigDecimal price, Integer quantity, Cart cart) {
         this.id = id;
-        this.productName = productName;
+        this.name = name;
+        this.description = description;
+        this.price = price;
         this.quantity = quantity;
         this.cart = cart;
     }
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
-    public String getProductName() {
-        return productName;
+    public String getName() {
+        return name;
     }
 
-    public void setProductName(String productName) {
-        this.productName = productName;
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
     }
 
     public Integer getQuantity() {

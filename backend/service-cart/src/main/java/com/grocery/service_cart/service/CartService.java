@@ -8,15 +8,15 @@ import java.util.List;
 import java.util.Optional;
 
 public interface CartService {
-    Cart createCartForUser(Long userId);
-    Optional<Cart> getCartById(Integer cartId);
-    Optional<Cart> getCartByUserId(Long userId);
+    Cart createCartForUser(String email);
+    Optional<Cart> getCartById(Long cartId);
+    Optional<Cart> getCartByUserEmail(String email);
 
-    Cart addItemToCart(Long userId, String productName, int quantity);
-    Cart updateItemQuantity(Long userId,String productName, int quantity);
-    Cart removeItemFromCart(Long userId,String productName);
-    Cart clearCart(Long userId);
+    Cart addItemToCart(String email, String productName, int quantity);
+    Cart updateItemQuantity(String email,String productName, int quantity);
+    Cart removeItemFromCart(String email,String productName);
+    Cart clearCart(String email);
 
-//    BigDecimal calculateCartTotal(Long userId);
-    List<CartItem> listItems(Long userId);
+//    BigDecimal calculateCartTotal(String email);
+    List<CartItem> listItems(String email);
 }
