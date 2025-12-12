@@ -44,13 +44,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  /**
-   * Call login with either:
-   * - backend response object (res.data) that includes token in .data or .token
-   * - or pass a token string directly
-   *
-   * Example: login(res.data)  or login(tokenString)
-   */
   const login = (payload) => {
     const normalized = normalizeUser(payload);
     if (!normalized) {
@@ -59,9 +52,6 @@ export const AuthProvider = ({ children }) => {
     }
     localStorage.setItem('user', JSON.stringify(normalized));
     setUser(normalized);
-    // don't log state.user here — state updates are async
-    console.log(user.token);
-    console.log('AuthProvider: token stored');
   };
 
   const logout = () => {

@@ -98,9 +98,12 @@ public class CartServiceImpl implements CartService {
         Cart cart = getCartByUserEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Cart not found for user: " + email));
 
+        cart.getItems().forEach(item -> item.setCart(null));
         cart.getItems().clear();
+
         return cartRepository.save(cart);
     }
+
 
     @Override
     public List<CartItem> listItems(String email) {

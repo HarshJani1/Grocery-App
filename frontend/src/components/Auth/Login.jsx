@@ -20,8 +20,8 @@ const Login = () => {
         "http://localhost:8765/service-auth/auth/token",
         formData
       );
-
-      const userData = response.data.data; 
+      const userData = response.data.data;
+      console.log(userData);
       login(userData);
       navigate(userData.role === "ADMIN" ? "/admin" : "/home");
 

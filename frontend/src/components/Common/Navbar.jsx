@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import './Navbar.css';
-
+import { FaUser } from "react-icons/fa";
 const Navbar = () => {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -27,6 +27,11 @@ const Navbar = () => {
           </li>
           <li>
             <Link to="/contactus">Contact</Link>
+          </li>
+          <li>
+            <Link to="/userProfile">
+              <FaUser />
+            </Link>
           </li>
         </ul>
 

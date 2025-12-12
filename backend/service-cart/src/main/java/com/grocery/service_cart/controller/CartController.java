@@ -66,6 +66,13 @@ public class CartController {
     }
 
 
+    @PostMapping("/clear")
+    public ResponseEntity<Map<String,Object>> clearCart(@RequestHeader String email){
+        cartService.clearCart(email);
+        return ResponseEntity.ok(buildResponse(HttpStatus.OK, "cart cleared", null));
+    }
+
+
 
 
 

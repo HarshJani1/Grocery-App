@@ -1,5 +1,6 @@
 package com.grocery.service_user.service;
 
+import com.grocery.service_user.DTO.UserDTO;
 import com.grocery.service_user.entity.User;
 import com.grocery.service_user.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -32,11 +33,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User updateUser(User product) {
-        User user = getUser(product.getId());
+    public User updateUser(UserDTO product,String email) {
+        User user = userRepository.findByEmail(email);
         if (user != null) {
             user.setUsername(product.getUsername());
-            user.setPassword(product.getPassword());
             user.setEmail(product.getEmail());
             user.setPhoneNumber(product.getPhoneNumber());
             user.setAddress(product.getAddress());
@@ -46,8 +46,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void deleteUser(long id) {
-        userRepository.deleteById(id);
+    public void deleteUser(String email) {
+        userRepository.deleteByEmail(email);
     }
 
 

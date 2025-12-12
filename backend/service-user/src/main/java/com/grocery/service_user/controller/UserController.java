@@ -1,5 +1,6 @@
 package com.grocery.service_user.controller;
 
+import com.grocery.service_user.DTO.UserDTO;
 import com.grocery.service_user.entity.User;
 import com.grocery.service_user.service.UserService;
 import org.springframework.http.HttpStatus;
@@ -12,7 +13,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/users")
-@CrossOrigin("*")
 public class UserController {
 
     private final UserService userService;
@@ -64,9 +64,9 @@ public class UserController {
 
     // UPDATE USER
     @PutMapping("/update")
-    public ResponseEntity<Map<String, Object>> updateUser(@RequestBody User user) {
+    public ResponseEntity<Map<String, Object>> updateUser(@RequestBody UserDTO user,@RequestHeader String email) {
         try {
-            User updated = userService.updateUser(user);
+            User updated = userService.updateUser(user,email);
             return ResponseEntity
                     .ok(buildResponse("success", "User updated successfully", updated));
         } catch (Exception e) {
@@ -77,10 +77,10 @@ public class UserController {
     }
 
     // DELETE USER
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Map<String, Object>> deleteUser(@PathVariable long id) {
+    @DeleteMapping("/delete")
+    public ResponseEntity<Map<String, Object>> deleteUser(@RequestHeader String email) {
         try {
-            userService.deleteUser(id);
+            userService.deleteUser(email);
             return ResponseEntity
                     .ok(buildResponse("success", "User deleted successfully", null));
         } catch (IllegalArgumentException e) {
