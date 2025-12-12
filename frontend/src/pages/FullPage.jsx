@@ -5,8 +5,10 @@ import ProductCard1 from '../components/Common/ProductCard1';
 import './FullPage.css';
 import Navbar from '../components/Common/Navbar';
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from 'react-router-dom';
 
 const FullPage = () => {
+  const nav = useNavigate();
   const { user } = useAuth();
   const token = user?.token;
   const { id } = useParams();
@@ -17,7 +19,7 @@ const FullPage = () => {
   const [recommended, setRecommended] = useState([]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token) nav('/login');
 
     const fetchImage = async () => {
             try {

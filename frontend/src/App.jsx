@@ -6,6 +6,7 @@ import AdminPanel from "./components/Admin/AdminPanel";
 import FullPage from "./pages/FullPage";
 import AboutUs from "./pages/AboutUs";
 import ContactUs from "./pages/ContactUs";
+import Cart from "./pages/Cart";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
       <Route path="/product/:id" element={<FullPage />} />
       <Route path="/aboutus" element={<AboutUs />} />
       <Route path="/contactus" element={<ContactUs />} />
+      <Route path="/cart" element={<Cart />} />
     </Routes>
   );
 }

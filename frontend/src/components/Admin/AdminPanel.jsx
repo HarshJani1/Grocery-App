@@ -4,16 +4,19 @@ import ProductForm from './ProductForm';
 import ProductCard from '../Common/ProductCard';
 import './AdminPanel.css';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const AdminPanel = () => {
+  const nav = useNavigate();
   const { user } = useAuth();
   const token = user?.token ?? null;
+  const role = user?.role ?? null;
 
   const [products, setProducts] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || role != "ADMIN") nav('/login');
 
     const fetchProducts = async () => {
       try {

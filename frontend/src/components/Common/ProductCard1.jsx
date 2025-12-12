@@ -9,6 +9,7 @@ const ProductCard1 = ({ product }) => {
   const [positiveReviews, setPositiveReviews] = useState(product.positiveReviews || 0);
   const [negativeReviews, setNegativeReviews] = useState(product.negativeReviews || 0);
   const [error, setError] = useState("");
+  const [quantity, setQuantity] = useState(0);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const token = user?.token;
@@ -17,10 +18,11 @@ const ProductCard1 = ({ product }) => {
   const urlRef = useRef(null);
 
   useEffect(() => {
+
     if (!product?.id || !token) {
       // clean up if token missing or product absent
       if (urlRef.current) {
-        try { URL.revokeObjectURL(urlRef.current); } catch (_) {}
+        try { URL.revokeObjectURL(urlRef.current); } catch (_) { }
         urlRef.current = null;
       }
       setImageUrl(null);
@@ -47,7 +49,7 @@ const ProductCard1 = ({ product }) => {
 
         // revoke previous
         if (urlRef.current) {
-          try { URL.revokeObjectURL(urlRef.current); } catch (_) {}
+          try { URL.revokeObjectURL(urlRef.current); } catch (_) { }
         }
 
         urlRef.current = url;
@@ -65,11 +67,47 @@ const ProductCard1 = ({ product }) => {
     return () => {
       cancelled = true;
       if (urlRef.current) {
-        try { URL.revokeObjectURL(urlRef.current); } catch (_) {}
+        try { URL.revokeObjectURL(urlRef.current); } catch (_) { }
         urlRef.current = null;
       }
     };
   }, [product?.id, token]);
+
+  const handleQuantity = (event) => {
+    setQuantity(event.target.value);
+  }
+
+  const handleAddToCart = async () => {
+    if (!token) {
+      setError("You must be logged in to add items.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const res = await axios.post(
+        `http://localhost:8765/service-cart/cart/add`,
+        {
+          productName: product.name,
+          quantity: Number(quantity),
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      console.log("Cart Add Response:", res.data);
+      setQuantity(0);
+      setError("");
+    } catch (err) {
+      console.error("Add to Cart Error:", err?.response || err);
+      setError("Failed to add item to cart");
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   const handleSubmit = async (id) => {
     if (!review.trim()) return;
@@ -145,6 +183,20 @@ const ProductCard1 = ({ product }) => {
       <div className="reviews">
         <p>👍 {positiveReviews}</p>
         <p>👎 {negativeReviews}</p>
+      </div>
+
+      <div>
+        <input
+          type="number"
+          value={quantity}
+          onChange={handleQuantity}
+          min="0"
+          max="50"
+        />
+        <button type="submit"
+          disabled={loading}
+          onClick={() => handleAddToCart()}
+        >{loading ? "Adding to Cart.." : "Add to Cart"}</button>
       </div>
 
       {error && <p className="error">{error}</p>}

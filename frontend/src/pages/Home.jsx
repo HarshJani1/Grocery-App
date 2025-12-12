@@ -4,15 +4,17 @@ import ProductCard1 from '../components/Common/ProductCard1';
 import './Home.css';
 import Navbar from '../components/Common/Navbar';
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from 'react-router-dom';
 
 const Home = () => {
+  const nav = useNavigate();
   const { user } = useAuth();
   const token = user?.token;
 
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token) nav('/login');
 
     const fetchProducts = async () => {
       try {
