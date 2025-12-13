@@ -1,33 +1,25 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { Link } from 'react-router-dom';
-import './ProductCard1.css';
+import { Link } from "react-router-dom";
+import "./ProductCard1.css";
 import { useAuth } from "../../context/AuthContext";
 
 const ProductCard1 = ({ product }) => {
-  const [review, setReview] = useState("");
-  const [positiveReviews, setPositiveReviews] = useState(product.positiveReviews || 0);
-  const [negativeReviews, setNegativeReviews] = useState(product.negativeReviews || 0);
-  const [error, setError] = useState("");
-  const [quantity, setQuantity] = useState(0);
-  const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const token = user?.token;
 
+  const [review, setReview] = useState("");
+  const [positiveReviews, setPositiveReviews] = useState(product.positiveReviews || 0);
+  const [negativeReviews, setNegativeReviews] = useState(product.negativeReviews || 0);
+  const [quantity, setQuantity] = useState(1);
   const [imageUrl, setImageUrl] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
   const urlRef = useRef(null);
 
   useEffect(() => {
-
-    if (!product?.id || !token) {
-      // clean up if token missing or product absent
-      if (urlRef.current) {
-        try { URL.revokeObjectURL(urlRef.current); } catch (_) { }
-        urlRef.current = null;
-      }
-      setImageUrl(null);
-      return;
-    }
+    if (!product?.id || !token) return;
 
     let cancelled = false;
 
@@ -37,105 +29,66 @@ const ProductCard1 = ({ product }) => {
           `http://localhost:8765/service-product/products/getImage/${product.id}`,
           {
             responseType: "blob",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` }
           }
         );
 
         if (cancelled) return;
 
         const url = URL.createObjectURL(res.data);
-
-        // revoke previous
-        if (urlRef.current) {
-          try { URL.revokeObjectURL(urlRef.current); } catch (_) { }
-        }
-
+        if (urlRef.current) URL.revokeObjectURL(urlRef.current);
         urlRef.current = url;
         setImageUrl(url);
-      } catch (e) {
-        if (!cancelled) {
-          console.error(`Error fetching image for product ${product.id}:`, e);
-          setImageUrl(null);
-        }
+      } catch {
+        setImageUrl(null);
       }
     };
 
     fetchImage();
-
     return () => {
       cancelled = true;
-      if (urlRef.current) {
-        try { URL.revokeObjectURL(urlRef.current); } catch (_) { }
-        urlRef.current = null;
-      }
+      if (urlRef.current) URL.revokeObjectURL(urlRef.current);
     };
   }, [product?.id, token]);
 
-  const handleQuantity = (event) => {
-    setQuantity(event.target.value);
-  }
-
   const handleAddToCart = async () => {
     if (!token) {
-      setError("You must be logged in to add items.");
+      setError("Please login to add items.");
       return;
     }
 
     try {
       setLoading(true);
-
-      const res = await axios.post(
-        `http://localhost:8765/service-cart/cart/add`,
-        {
-          productName: product.name,
-          quantity: Number(quantity),
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+      await axios.post(
+        "http://localhost:8765/service-cart/cart/add",
+        { productName: product.name, quantity },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      console.log("Cart Add Response:", res.data);
-      setQuantity(0);
+      setQuantity(1);
       setError("");
-    } catch (err) {
-      console.error("Add to Cart Error:", err?.response || err);
-      setError("Failed to add item to cart");
+    } catch {
+      setError("Failed to add to cart");
     } finally {
       setLoading(false);
     }
   };
 
-
-  const handleSubmit = async (id) => {
+  const handleSubmitReview = async () => {
     if (!review.trim()) return;
-    if (!token) {
-      setError("You must be logged in to submit reviews.");
-      return;
-    }
 
     try {
       setLoading(true);
       const res = await axios.post(
-        `http://localhost:8765/service-ml/products/analyze`,
+        "http://localhost:8765/service-ml/products/analyze",
         { text: review },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      const sentiment = res?.data?.sentiment ?? res?.data;
-      if (sentiment === "1" || sentiment === 1 || sentiment === true) {
-        setPositiveReviews(prev => prev + 1);
-      } else {
-        setNegativeReviews(prev => prev + 1);
-      }
+
+      const sentiment = res.data.sentiment;
+      sentiment ? setPositiveReviews(p => p + 1) : setNegativeReviews(n => n + 1);
       setReview("");
-      setError("");
-    } catch (err) {
-      console.error("Error Response:", err);
-      setError("Error submitting review");
+    } catch {
+      setError("Review submission failed");
     } finally {
       setLoading(false);
     }
@@ -143,24 +96,16 @@ const ProductCard1 = ({ product }) => {
 
   return (
     <div className="product-card">
-      <div className="images">
+      <div className="image-wrapper">
         {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={product?.name ?? `product-${product?.id}`}
-            style={{ width: "100%", maxHeight: 220, objectFit: "cover" }}
-          />
+          <img src={imageUrl} alt={product.name} />
         ) : (
-          <div className="image-placeholder">Loading image...</div>
+          <div className="image-loader"></div>
         )}
       </div>
 
-      <Link
-        key={product.id}
-        to={`/product/${product.id}`}
-        style={{ textDecoration: 'none', color: 'inherit' }}
-      >
-        <h2>{product.name}</h2>
+      <Link to={`/product/${product.id}`} className="product-title">
+        {product.name}
       </Link>
 
       <p className="description">{product.description}</p>
@@ -170,33 +115,29 @@ const ProductCard1 = ({ product }) => {
         type="text"
         placeholder="Write a review..."
         value={review}
-        onChange={(e) => setReview(e.target.value)}
+        onChange={e => setReview(e.target.value)}
       />
 
-      <button
-        onClick={() => handleSubmit(product.id)}
-        disabled={loading}
-      >
-        {loading ? "Submitting..." : "Submit"}
+      <button className="primary-btn" onClick={handleSubmitReview} disabled={loading}>
+        {loading ? "Submitting..." : "Submit Review"}
       </button>
 
-      <div className="reviews">
-        <p>👍 {positiveReviews}</p>
-        <p>👎 {negativeReviews}</p>
+      <div className="review-count">
+        <span>👍 {positiveReviews}</span>
+        <span>👎 {negativeReviews}</span>
       </div>
 
-      <div>
+      <div className="cart-row">
         <input
           type="number"
-          value={quantity}
-          onChange={handleQuantity}
-          min="0"
+          min="1"
           max="50"
+          value={quantity}
+          onChange={e => setQuantity(Number(e.target.value))}
         />
-        <button type="submit"
-          disabled={loading}
-          onClick={() => handleAddToCart()}
-        >{loading ? "Adding to Cart.." : "Add to Cart"}</button>
+        <button className="primary-btn" onClick={handleAddToCart} disabled={loading}>
+          {loading ? "Adding..." : "Add to Cart"}
+        </button>
       </div>
 
       {error && <p className="error">{error}</p>}

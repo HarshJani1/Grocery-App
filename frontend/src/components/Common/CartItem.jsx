@@ -1,7 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
 import { Link } from 'react-router-dom';
-import { useAuth } from "../../context/AuthContext";
 const Cart = ({product}) => {
 
     return (

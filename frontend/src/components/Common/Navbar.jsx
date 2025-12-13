@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import './Navbar.css';
+import React, { useState } from "react";
+import { Link, NavLink } from "react-router-dom";
+import "./Navbar.css";
 import { FaUser } from "react-icons/fa";
+
 const Navbar = () => {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -9,7 +10,7 @@ const Navbar = () => {
     <nav className="navbar">
       <div className="navbar-container">
         <div className="navbar-logo">
-          <Link to="/">Grocery Store</Link>
+          <Link to="/">FreshBasket</Link>
         </div>
 
         <ul
@@ -17,21 +18,21 @@ const Navbar = () => {
           onClick={() => setIsMobile(false)}
         >
           <li>
-            <Link to="/home">Home</Link>
+            <NavLink to="/home">Home</NavLink>
           </li>
           <li>
-            <Link to="/cart">Cart</Link>
+            <NavLink to="/cart">Cart</NavLink>
           </li>
           <li>
-            <Link to="/aboutus">About Us</Link>
+            <NavLink to="/aboutus">About Us</NavLink>
           </li>
           <li>
-            <Link to="/contactus">Contact</Link>
+            <NavLink to="/contactus">Contact</NavLink>
           </li>
-          <li>
-            <Link to="/userProfile">
+          <li className="profile-icon">
+            <NavLink to="/userProfile">
               <FaUser />
-            </Link>
+            </NavLink>
           </li>
         </ul>
 
@@ -40,11 +41,7 @@ const Navbar = () => {
           onClick={() => setIsMobile(!isMobile)}
           aria-label="Toggle navigation menu"
         >
-          {isMobile ? (
-            <i className="fas fa-times"></i>
-          ) : (
-            <i className="fas fa-bars"></i>
-          )}
+          {isMobile ? "✕" : "☰"}
         </button>
       </div>
     </nav>

@@ -1,139 +1,183 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import axios from 'axios';
-import ProductCard1 from '../components/Common/ProductCard1';
-import './FullPage.css';
-import Navbar from '../components/Common/Navbar';
+import { useEffect, useState, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
+import ProductCard1 from "../components/Common/ProductCard1";
+import "./FullPage.css";
+import Navbar from "../components/Common/Navbar";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from 'react-router-dom';
 
 const FullPage = () => {
-  const nav = useNavigate();
+  const navigate = useNavigate();
+  const { id } = useParams();
   const { user } = useAuth();
   const token = user?.token;
-  const { id } = useParams();
 
   const [product, setProduct] = useState(null);
-  const [imageUrl, setImageUrl] = useState([]);
   const [productList, setProductList] = useState([]);
   const [recommended, setRecommended] = useState([]);
+  const [imageUrl, setImageUrl] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const imgRef = useRef(null);
 
   useEffect(() => {
-    if (!token) nav('/login');
+    if (!token) {
+      navigate("/login");
+      return;
+    }
 
-    const fetchImage = async () => {
-            try {
-                const res = await axios.get(
-                    `http://localhost:8765/service-product/products/getImage/${id}`,
-                    {
-                        responseType: "blob",
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    }
-                );
-
-                const url = URL.createObjectURL(res.data);
-                setImageUrl(url);
-            } catch (e) {
-                console.error("Error fetching image:", e);
-            }
-        };
-
-
-        fetchImage();
-
-
-
-    const fetchProduct = async () => {
+    const fetchAll = async () => {
       try {
-        const res = await axios.get(`http://localhost:8765/service-product/products/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setProduct(res?.data?.data ?? res?.data ?? null);
+        setPageLoading(true);
 
-        const res1 = await axios.get("http://localhost:8765/service-product/products", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const payload = res1?.data?.data ?? res1?.data ?? [];
-        setProductList(Array.isArray(payload) ? payload : []);
+        const [productRes, listRes, imageRes] = await Promise.all([
+          axios.get(
+            `http://localhost:8765/service-product/products/${id}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          ),
+          axios.get(
+            "http://localhost:8765/service-product/products",
+            { headers: { Authorization: `Bearer ${token}` } }
+          ),
+          axios.get(
+            `http://localhost:8765/service-product/products/getImage/${id}`,
+            {
+              responseType: "blob",
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          ),
+        ]);
+
+        const productData =
+          productRes?.data?.data ?? productRes?.data ?? null;
+        setProduct(productData);
+
+        const listPayload =
+          listRes?.data?.data ?? listRes?.data ?? [];
+        setProductList(Array.isArray(listPayload) ? listPayload : []);
+
+        const url = URL.createObjectURL(imageRes.data);
+        if (imgRef.current) URL.revokeObjectURL(imgRef.current);
+        imgRef.current = url;
+        setImageUrl(url);
       } catch (err) {
-        console.error("Failed to fetch product:", err);
+        console.error(err);
+      } finally {
+        setPageLoading(false);
       }
     };
 
-    fetchProduct();
+    fetchAll();
+
+    return () => {
+      if (imgRef.current) URL.revokeObjectURL(imgRef.current);
+    };
   }, [id, token]);
 
   useEffect(() => {
     const fetchRecommendations = async () => {
+      if (!product?.name) return;
       try {
-        if (!product?.name) return;
-
-        const res3 = await axios.get(
-          `http://localhost:8765/service-ml/products/recommend/${encodeURIComponent(product.name)}`
+        const res = await axios.get(
+          `http://localhost:8765/service-ml/products/recommend/${encodeURIComponent(
+            product.name
+          )}`
         );
-
-        const recs = res3?.data?.recommendations ?? res3?.data ?? [];
+        const recs = res?.data?.recommendations ?? res?.data ?? [];
         setRecommended(Array.isArray(recs) ? recs : []);
-      } catch (err) {
-        console.error("Failed to fetch recommendations:", err);
+      } catch {
         setRecommended([]);
       }
     };
-
     fetchRecommendations();
   }, [product]);
 
-  const recommendedProducts = Array.isArray(recommended)
-    ? productList.filter(p => recommended.includes(p.name))
-    : [];
+  const handleAddToCart = async () => {
+    try {
+      setLoading(true);
+      await axios.post(
+        "http://localhost:8765/service-cart/cart/add",
+        { productName: product.name, quantity },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setQuantity(1);
+      setError("");
+    } catch {
+      setError("Failed to add to cart");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  if (!product) return <div className="text-white text-center mt-10">Loading...</div>;
+  const recommendedProducts = productList.filter((p) =>
+    recommended.includes(p.name)
+  );
+
+  if (pageLoading) {
+    return (
+      <>
+        <Navbar />
+        <div className="fullpage-loader" />
+      </>
+    );
+  }
+
+  if (!product) return null;
 
   return (
-    <div>
+    <>
       <Navbar />
       <div className="fullpage-container">
-        <div>
-          <img
-                    src={imageUrl}
-                    alt={product.name}
-                    style={{
-                      width: "50%",
-                      height: "10%",
-                      objectFit: "cover",
-                      padding: "10px",
-                      margin: "12%",
-                    }}
-                  />
-          <section className="mb-12 pt-16">
-            <h1 className="text-3xl font-bold text-violet-400 mb-2">{product.name}</h1>
-            <h4 className="text-lg text-gray-300 mb-4">{product.description}</h4>
-            <p className="text-blue-400 font-semibold text-lg mb-2">💰 Price: ${product.price}</p>
+        <div className="product-detail-card">
+          <div className="image-section">
+            {imageUrl ? <img src={imageUrl} alt={product.name} /> : <div className="img-skeleton" />}
+          </div>
 
-            <div className="text-sm text-gray-400 mt-2">
-              <p>👍 Positive Reviews: {product.positiveReviews}</p>
-              <p>👎 Negative Reviews: {product.negativeReviews}</p>
+          <div className="info-section">
+            <h1>{product.name}</h1>
+            <p className="description">{product.description}</p>
+            <p className="price">${product.price}</p>
+
+            <div className="reviews">
+              <span>👍 {product.positiveReviews}</span>
+              <span>👎 {product.negativeReviews}</span>
             </div>
-          </section>
 
-          <section>
-            <h2 className="text-2xl font-semibold text-violet-300 mb-4">🧠 Recommended Products</h2>
+            <div className="cart-row">
+              <input
+                type="number"
+                min="1"
+                max="50"
+                value={quantity}
+                onChange={(e) => setQuantity(Number(e.target.value))}
+              />
+              <button onClick={handleAddToCart} disabled={loading}>
+                {loading ? "Adding..." : "Add to Cart"}
+              </button>
+            </div>
 
-            {recommendedProducts.length > 0 ? (
-              <div className="grid">
-                {recommendedProducts.map(item => (
-                  <ProductCard1 key={item._id} product={item} />
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500">No recommended products found</p>
-            )}
-          </section>
+            {error && <p className="error">{error}</p>}
+          </div>
         </div>
+
+        <section className="recommend-section">
+          <h2>Recommended Products</h2>
+
+          {recommendedProducts.length > 0 ? (
+            <div className="recommend-grid">
+              {recommendedProducts.map((item) => (
+                <ProductCard1 key={item.id} product={item} />
+              ))}
+            </div>
+          ) : (
+            <p className="empty">No recommended products</p>
+          )}
+        </section>
       </div>
-    </div>
+    </>
   );
 };
 
