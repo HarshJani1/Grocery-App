@@ -74,8 +74,7 @@ const UserProfile = () => {
       await axios.delete(
         "http://localhost:8765/service-user/users/delete",
         {
-          headers: { Authorization: `Bearer ${token}` },
-          data: { email: form.email },
+          headers: { Authorization: `Bearer ${token}` }
         }
       );
       logout();

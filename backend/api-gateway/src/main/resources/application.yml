@@ -51,11 +51,15 @@ spring:
           uri: lb://SERVICE-PRODUCT
           predicates:
             - Path=/service-product/**
+        - id: service-ml
+          uri: lb://service-ml
+          predicates:
+            - Path=/service-ml/**
 
       # HTTP client timeouts
       httpclient:
-        connect-timeout: 10000
-        response-timeout: 10s
+        connect-timeout: 30000
+        response-timeout: 30s
 
 eureka:
   client:
@@ -63,13 +67,6 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
     register-with-eureka: true
     fetch-registry: true
-
-logging:
-  level:
-    root: INFO
-    org.springframework.security: DEBUG
-    com.grocery.api_gateway: DEBUG
-    org.springframework.web.cors: DEBUG
 
 management:
   endpoints:

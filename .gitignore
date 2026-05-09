@@ -1,0 +1,27 @@
+# Logs
+**/logs/
+*.log
+src/main/resources/logs/
+
+# Java/Spring
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.ctxt
+.mtj.tmp/
+*.iml
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db

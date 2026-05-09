@@ -84,8 +84,10 @@ const FullPage = () => {
         const res = await axios.get(
           `http://localhost:8765/service-ml/products/recommend/${encodeURIComponent(
             product.name
-          )}`
+          )}`,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
+        console.log(res);
         const recs = res?.data?.recommendations ?? res?.data ?? [];
         setRecommended(Array.isArray(recs) ? recs : []);
       } catch {

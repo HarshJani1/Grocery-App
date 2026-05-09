@@ -1,26 +1,22 @@
-import { Link } from 'react-router-dom';
-const Cart = ({product}) => {
+import { Link } from "react-router-dom";
+import "./CartItem.css";
 
-    return (
-        <div>
-            <Link
-                key={product.id}
-                to={`/product/${product.id}`}
-                style={{ textDecoration: 'none', color: 'inherit' }}
-            >
-                <h2>{product.name}</h2>
-            </Link>
-            <div>
-                {product.price}
-            </div>
-            <div>
-                {product.quantity}
-            </div>
-            <div>
-                ${product.price*(product.quantity)}
-            </div>
-        </div>
-    );
+const CartItem = ({ product }) => {
+  return (
+    <div className="cart-item">
+      <div className="cart-item-info">
+        <p>
+          {product.name}
+        </p>
+        <p className="cart-item-qty">Qty: {product.quantity}</p>
+      </div>
+
+      <div className="cart-item-price">
+        <span>₹{product.price}</span>
+        <strong>₹{(product.price * product.quantity).toFixed(2)}</strong>
+      </div>
+    </div>
+  );
 };
 
-export default Cart;
+export default CartItem;
