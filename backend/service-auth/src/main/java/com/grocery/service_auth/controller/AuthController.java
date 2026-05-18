@@ -16,8 +16,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Optional;
-
 @RestController
 @RequestMapping("/auth")
 
@@ -60,19 +58,18 @@ public class AuthController {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword()));
 
-            Optional<User> user = authService.findUserByEmail(authRequest.getEmail());
+            User user = authService.findUserByEmail(authRequest.getEmail());
 
-            if (authentication.isAuthenticated() && user.isPresent()) {
+            if (authentication.isAuthenticated() && user != null) {
 
                 String token = service.generateToken(authRequest.getEmail());
-                User u = user.get();
 
                 UserDTO dto = new UserDTO(
-                        u.getUsername(),
-                        u.getEmail(),
-                        u.getPhoneNumber(),
-                        u.getAddress(),
-                        u.getRole(),
+                        user.getUsername(),
+                        user.getEmail(),
+                        user.getPhoneNumber(),
+                        user.getAddress(),
+                        user.getRole(),
                         token
                 );
 

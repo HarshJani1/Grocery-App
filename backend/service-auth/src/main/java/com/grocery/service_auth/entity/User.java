@@ -4,10 +4,16 @@ package com.grocery.service_auth.entity;
 import jakarta.persistence.*;
 import lombok.Builder;
 
+import java.io.Serial;
+import java.io.Serializable;
+
 @Entity
 @Builder
 @Table(name = "USERS")
-public class User {
+public class User implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -94,5 +100,9 @@ public class User {
 
     public Role getRole() {
         return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
     }
 }

@@ -3,12 +3,17 @@ package com.grocery.service_product.entity;
 import jakarta.persistence.*;
 import lombok.Builder;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 @Entity
 @Builder
 @Table(name = "PRODUCTS")
-public class Product {
+public class Product implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -4,10 +4,10 @@ import com.grocery.service_auth.entity.User;
 import com.grocery.service_auth.repository.UserCredentialRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 @Service
 public class AuthService {
@@ -24,7 +24,10 @@ public class AuthService {
         this.jwtService = jwtService;
     }
 
-
+    /**
+     * Save a new user and evict the cache for that email in case it was cached before.
+     */
+    @CacheEvict(value = "users", key = "#credential.email")
     public String saveUser(User credential) {
         log.info("Saving user | email={}", credential.getEmail());
         try {
@@ -38,10 +41,17 @@ public class AuthService {
         }
     }
 
-    public Optional<User> findUserByEmail(String email) {
-        log.debug("Finding user by email | email={}", email);
-        Optional<User> user = repository.findByEmail(email);
-        if (user.isPresent()) {
+    /**
+     * Cache user lookups by email — avoids repeated DB hits on every auth request.
+     * Returns User directly (nullable). Optional was causing Jackson to unwrap the
+     * inner value during deserialization, breaking SpEL's isPresent() evaluation.
+     * TTL: 10 minutes (configured in RedisConfig).
+     */
+    @Cacheable(value = "users", key = "#email", unless = "#result == null")
+    public User findUserByEmail(String email) {
+        log.debug("Finding user by email | email={} | cache=MISS", email);
+        User user = repository.findByEmail(email).orElse(null);
+        if (user != null) {
             log.debug("User found | email={}", email);
         } else {
             log.warn("User not found | email={}", email);
@@ -61,8 +71,13 @@ public class AuthService {
         }
     }
 
+    /**
+     * Cache token validation results — avoids re-parsing and re-verifying JWT
+     * signature on every downstream request. TTL matches JWT expiry (30 min).
+     */
+    @Cacheable(value = "tokens", key = "#token")
     public void validateToken(String token) {
-        log.debug("Validating JWT token");
+        log.debug("Validating JWT token | cache=MISS");
         try {
             jwtService.validateToken(token);
             log.debug("JWT token is valid");
@@ -71,6 +86,5 @@ public class AuthService {
             throw e;
         }
     }
-
 
 }
