@@ -3,6 +3,12 @@
 *.log
 src/main/resources/logs/
 
+# Secrets / Environment
+.env
+.env.*
+*.env
+
+
 # Java/Spring
 target/
 *.class
@@ -25,3 +31,8 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+.agents/rules
+.agents/workflows
+
+graphify-out

@@ -1,15 +1,21 @@
 package com.grocery.service_cart.service;
 
+import com.grocery.service_cart.DTO.CheckoutEvent;
+import com.grocery.service_cart.DTO.CheckoutItemDTO;
+import com.grocery.service_cart.config.RabbitMQConfig;
 import com.grocery.service_cart.entity.Cart;
 import com.grocery.service_cart.entity.CartItem;
 import com.grocery.service_cart.repository.CartRepository;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class CartServiceImpl implements CartService {
@@ -18,10 +24,14 @@ public class CartServiceImpl implements CartService {
 
     private final CartRepository cartRepository;
     private final CartItemService cartItemService;
+    private final RabbitTemplate rabbitTemplate;
 
-    public CartServiceImpl(CartRepository cartRepository, CartItemService cartItemService) {
+    public CartServiceImpl(CartRepository cartRepository,
+                           CartItemService cartItemService,
+                           RabbitTemplate rabbitTemplate) {
         this.cartRepository = cartRepository;
         this.cartItemService = cartItemService;
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     @Override
@@ -136,12 +146,44 @@ public class CartServiceImpl implements CartService {
             Cart cart = getCartByUserEmail(email)
                     .orElseThrow(() -> new IllegalArgumentException("Cart not found for user: " + email));
 
-            int itemCount = cart.getItems().size();
+            // ── 1. Snapshot items BEFORE clearing for the bill email ──────────
+            List<CheckoutItemDTO> billItems = cart.getItems().stream()
+                    .map(item -> new CheckoutItemDTO(
+                            item.getName(),
+                            item.getDescription(),
+                            item.getPrice() != null ? item.getPrice() : BigDecimal.ZERO,
+                            item.getQuantity()
+                    ))
+                    .collect(Collectors.toList());
+
+            // ── 2. Calculate grand total (price × quantity per line) ──────────
+            BigDecimal grandTotal = billItems.stream()
+                    .map(i -> i.getPrice().multiply(BigDecimal.valueOf(i.getQuantity())))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            int itemCount = billItems.size();
+
+            // ── 3. Clear the cart ────────────────────────────────────────────
             cart.getItems().forEach(item -> item.setCart(null));
             cart.getItems().clear();
-
             Cart saved = cartRepository.save(cart);
-            log.info("Cart cleared successfully | email={} | removedItems={}", email, itemCount);
+            log.info("Cart cleared successfully | email={} | removedItems={} | total={}",
+                    email, itemCount, grandTotal);
+
+            // ── 4. Publish CheckoutEvent to RabbitMQ (async — does not block) ─
+            if (!billItems.isEmpty()) {
+                CheckoutEvent event = new CheckoutEvent(email, billItems, grandTotal);
+                rabbitTemplate.convertAndSend(
+                        RabbitMQConfig.EXCHANGE,
+                        RabbitMQConfig.CHECKOUT_ROUTING_KEY,
+                        event
+                );
+                log.info("CheckoutEvent published | email={} | items={} | total={}",
+                        email, itemCount, grandTotal);
+            } else {
+                log.info("Cart was empty — no CheckoutEvent published | email={}", email);
+            }
+
             return saved;
         } catch (Exception e) {
             log.error("Failed to clear cart | email={} | error={}", email, e.getMessage(), e);

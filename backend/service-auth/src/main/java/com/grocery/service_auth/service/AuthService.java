@@ -1,9 +1,12 @@
 package com.grocery.service_auth.service;
 
+import com.grocery.service_auth.config.RabbitMQConfig;
+import com.grocery.service_auth.dto.WelcomeEvent;
 import com.grocery.service_auth.entity.User;
 import com.grocery.service_auth.repository.UserCredentialRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,14 +17,19 @@ public class AuthService {
 
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
-    private UserCredentialRepository repository;
-    private PasswordEncoder passwordEncoder;
-    private JwtService jwtService;
+    private final UserCredentialRepository repository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final RabbitTemplate rabbitTemplate;
 
-    public AuthService(UserCredentialRepository repository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public AuthService(UserCredentialRepository repository,
+                       PasswordEncoder passwordEncoder,
+                       JwtService jwtService,
+                       RabbitTemplate rabbitTemplate) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     /**
@@ -34,6 +42,12 @@ public class AuthService {
             credential.setPassword(passwordEncoder.encode(credential.getPassword()));
             repository.save(credential);
             log.info("User saved successfully | email={}", credential.getEmail());
+
+            // Publish welcome email event to RabbitMQ (async — does not block signup response)
+            WelcomeEvent event = new WelcomeEvent(credential.getEmail(), credential.getUsername());
+            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.WELCOME_ROUTING_KEY, event);
+            log.info("WelcomeEvent published | email={}", credential.getEmail());
+
             return "user added to the system";
         } catch (Exception e) {
             log.error("Failed to save user | email={} | error={}", credential.getEmail(), e.getMessage(), e);

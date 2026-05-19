@@ -55,6 +55,14 @@ spring:
           uri: lb://service-ml
           predicates:
             - Path=/service-ml/**
+        - id: cart-service
+          uri: lb://SERVICE-CART
+          predicates:
+            - Path=/service-cart/**
+        - id: email-service
+          uri: lb://SERVICE-EMAIL
+          predicates:
+            - Path=/service-email/**
 
       # HTTP client timeouts
       httpclient:
