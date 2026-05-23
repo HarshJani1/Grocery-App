@@ -73,8 +73,15 @@ public class AuthService {
         return user;
     }
 
+    /**
+     * Cache generated tokens by email — same credentials within the TTL
+     * return the same JWT instead of minting a new one every time.
+     * TTL: 25 minutes (slightly less than the 30-min JWT expiry to avoid
+     * serving a token that expires moments after being returned).
+     */
+    @Cacheable(value = "tokens", key = "#email")
     public String generateToken(String email) {
-        log.info("Generating JWT token | email={}", email);
+        log.info("Generating JWT token | email={} | cache=MISS", email);
         try {
             String token = jwtService.generateToken(email);
             log.info("JWT token generated successfully | email={}", email);
@@ -87,14 +94,16 @@ public class AuthService {
 
     /**
      * Cache token validation results — avoids re-parsing and re-verifying JWT
-     * signature on every downstream request. TTL matches JWT expiry (30 min).
+     * signature on every downstream request. Returns true if valid.
+     * TTL: 30 minutes (matches JWT expiry, configured in RedisConfig).
      */
-    @Cacheable(value = "tokens", key = "#token")
-    public void validateToken(String token) {
+    @Cacheable(value = "token-validations", key = "#token")
+    public boolean validateToken(String token) {
         log.debug("Validating JWT token | cache=MISS");
         try {
             jwtService.validateToken(token);
             log.debug("JWT token is valid");
+            return true;
         } catch (Exception e) {
             log.error("JWT token validation failed | error={}", e.getMessage(), e);
             throw e;

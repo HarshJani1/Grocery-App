@@ -38,8 +38,12 @@ public class RedisConfig {
         // User lookup cache — 10 minutes
         cacheConfigs.put("users", defaultCacheConfig().entryTtl(Duration.ofMinutes(10)));
 
+        // Generated token cache — 25 minutes (slightly under the 30-min JWT expiry
+        // so a cached token is never returned if it's about to expire)
+        cacheConfigs.put("tokens", defaultCacheConfig().entryTtl(Duration.ofMinutes(25)));
+
         // Token validation cache — 30 minutes (matches JWT expiry)
-        cacheConfigs.put("tokens", defaultCacheConfig().entryTtl(Duration.ofMinutes(30)));
+        cacheConfigs.put("token-validations", defaultCacheConfig().entryTtl(Duration.ofMinutes(30)));
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultCacheConfig().entryTtl(Duration.ofMinutes(10)))

@@ -11,6 +11,12 @@ spring:
   profiles:
     active: local
 
+  # Redis — used by the gateway rate limiter
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
   cloud:
     gateway:
       # Global CORS config (use allowedOriginPatterns when allowCredentials=true)
@@ -36,6 +42,20 @@ spring:
         locator:
           enabled: true
           lower-case-service-id: true
+
+      # Global rate limiter applied to ALL routes
+      # Uses Redis token-bucket algorithm via userKeyResolver bean
+      default-filters:
+        - name: RequestRateLimiter
+          args:
+            # Steady-state: 10 requests/second per user/IP
+            redis-rate-limiter.replenishRate: 10
+            # Allow a short burst of up to 20 requests
+            redis-rate-limiter.burstCapacity: 20
+            # Each request costs 1 token
+            redis-rate-limiter.requestedTokens: 1
+            # Bean name of the KeyResolver defined in AppConfig
+            key-resolver: "#{@userKeyResolver}"
 
       # Routes for downstream services
       routes:
