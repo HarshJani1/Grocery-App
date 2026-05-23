@@ -16,6 +16,10 @@ import traceback
 import os
 from datetime import datetime
 import pytz
+import pika
+import json
+import uuid
+import time
 
 # ==================== LOGGING SETUP ====================
 IST = pytz.timezone("Asia/Kolkata")
@@ -183,6 +187,84 @@ def init_recommendation_model():
 
 threading.Thread(target=init_recommendation_model, daemon=True).start()
 
+# ==================== RABBITMQ & ASYNC TASK SETUP ====================
+RABBITMQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
+QUEUE_NAME = "ml_analysis_queue"
+TASK_RESULTS = {}
+
+def publish_message(message: dict) -> bool:
+    try:
+        connection = pika.BlockingConnection(
+            pika.ConnectionParameters(host=RABBITMQ_HOST, heartbeat=600, blocked_connection_timeout=300)
+        )
+        channel = connection.channel()
+        channel.queue_declare(queue=QUEUE_NAME, durable=True)
+        channel.basic_publish(
+            exchange="",
+            routing_key=QUEUE_NAME,
+            body=json.dumps(message),
+            properties=pika.BasicProperties(
+                delivery_mode=2,  # make message durable
+            )
+        )
+        connection.close()
+        return True
+    except Exception as e:
+        log_error("Failed to publish message to RabbitMQ | error={}".format(str(e)), exc_info=True)
+        return False
+
+def start_consumer():
+    def consume():
+        while True:
+            try:
+                log_info("Starting RabbitMQ consumer thread...")
+                connection = pika.BlockingConnection(
+                    pika.ConnectionParameters(host=RABBITMQ_HOST, heartbeat=600, blocked_connection_timeout=300)
+                )
+                channel = connection.channel()
+                channel.queue_declare(queue=QUEUE_NAME, durable=True)
+                channel.basic_qos(prefetch_count=1)
+
+                def callback(ch, method, properties, body):
+                    try:
+                        data = json.loads(body.decode("utf-8"))
+                        task_id = data.get("task_id")
+                        text = data.get("text")
+                        
+                        log_info("Consumer started processing task_id={}".format(task_id))
+                        TASK_RESULTS[task_id] = {"status": "processing"}
+
+                        processed = preprocess_text(text)
+                        if not processed:
+                            TASK_RESULTS[task_id] = {"status": "failed", "error": "Preprocessing failed"}
+                            log_warn("Consumer task_id={} failed: preprocessing returned empty text".format(task_id))
+                        else:
+                            X = VECTORIZER.transform([processed]).toarray()
+                            pred = int(SENTIMENT_MODEL.predict(X)[0])
+                            TASK_RESULTS[task_id] = {"status": "completed", "sentiment": pred}
+                            log_info("Consumer task_id={} completed | sentiment={}".format(task_id, pred))
+
+                    except Exception as ex:
+                        log_error("Error in consumer callback: {}".format(str(ex)), exc_info=True)
+                        if 'task_id' in locals():
+                            TASK_RESULTS[task_id] = {"status": "failed", "error": str(ex)}
+                    finally:
+                        ch.basic_ack(delivery_tag=method.delivery_tag)
+
+                channel.basic_consume(queue=QUEUE_NAME, on_message_callback=callback)
+                channel.start_consuming()
+            except pika.exceptions.AMQPConnectionError as err:
+                log_warn("RabbitMQ connection lost in consumer thread, retrying in 5 seconds... error={}".format(str(err)))
+                time.sleep(5)
+            except Exception as e:
+                log_error("Unexpected error in RabbitMQ consumer: {}, retrying in 5 seconds...".format(str(e)), exc_info=True)
+                time.sleep(5)
+
+    consumer_thread = threading.Thread(target=consume, daemon=True)
+    consumer_thread.start()
+
+start_consumer()
+
 # ==================== ROUTES ====================
 @app.route("/products/analyze", methods=["POST"])
 def analyze():
@@ -195,19 +277,21 @@ def analyze():
             log_warn("POST /products/analyze - Empty text received", "400")
             return jsonify({"error": "Text is required"}), 400
 
-        log_debug("POST /products/analyze - Processing text | length={}".format(len(text)))
-        processed = preprocess_text(text)
-        if not processed:
-            log_warn("POST /products/analyze - Preprocessing returned empty result | originalLength={}".format(len(text)), "400")
-            return jsonify({"error": "Preprocessing failed"}), 400
+        task_id = str(uuid.uuid4())
+        TASK_RESULTS[task_id] = {"status": "queued"}
 
-        # ✅ FIXED LINE (correct variable + dense conversion)
-        X = VECTORIZER.transform([processed]).toarray()
+        message = {
+            "task_id": task_id,
+            "text": text
+        }
 
-        pred = int(SENTIMENT_MODEL.predict(X)[0])
-
-        log_info("POST /products/analyze - Sentiment analysis completed | sentiment={} | textLength={}".format(pred, len(text)), "200")
-        return jsonify({"sentiment": pred})
+        if publish_message(message):
+            log_info("POST /products/analyze - Task queued successfully | task_id={}".format(task_id), "202")
+            return jsonify({"task_id": task_id, "status": "queued"}), 202
+        else:
+            TASK_RESULTS[task_id] = {"status": "failed", "error": "Queueing failed"}
+            log_error("POST /products/analyze - Failed to queue task | task_id={}".format(task_id), "500")
+            return jsonify({"error": "Queueing failed"}), 500
 
     except Exception as e:
         log_error(
@@ -216,6 +300,18 @@ def analyze():
             exc_info=True
         )
         return jsonify({"error": "Internal server error"}), 500
+
+
+@app.route("/products/analyze/result/<task_id>", methods=["GET"])
+def get_result(task_id):
+    log_info("GET /products/analyze/result/{} - Fetching result".format(task_id))
+    result = TASK_RESULTS.get(task_id)
+    if not result:
+        log_warn("GET /products/analyze/result/{} - Task not found".format(task_id), "404")
+        return jsonify({"error": "Task not found"}), 404
+    
+    log_info("GET /products/analyze/result/{} - Result fetched | status={}".format(task_id, result["status"]), "200")
+    return jsonify(result)
 
 
 @app.route("/products/recommend/<product>", methods=["GET"])

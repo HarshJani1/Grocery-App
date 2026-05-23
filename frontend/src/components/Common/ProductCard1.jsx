@@ -46,15 +46,43 @@ const ProductCard1 = ({ product }) => {
     if (!review.trim()) return;
 
     setLoading(true);
-    const res = await axios.post(
-      "http://localhost:8765/service-ml/products/analyze",
-      { text: review },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    try {
+      const res = await axios.post(
+        "http://localhost:8765/service-ml/products/analyze",
+        { text: review },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-    res.data.sentiment ? setPositive(p => p + 1) : setNegative(n => n + 1);
-    setReview("");
-    setLoading(false);
+      const taskId = res.data.task_id;
+      if (!taskId) {
+        setLoading(false);
+        return;
+      }
+
+      const pollInterval = setInterval(async () => {
+        try {
+          const pollRes = await axios.get(
+            `http://localhost:8765/service-ml/products/analyze/result/${taskId}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+
+          if (pollRes.data.status === "completed") {
+            clearInterval(pollInterval);
+            pollRes.data.sentiment ? setPositive((p) => p + 1) : setNegative((n) => n + 1);
+            setReview("");
+            setLoading(false);
+          } else if (pollRes.data.status === "failed") {
+            clearInterval(pollInterval);
+            setLoading(false);
+          }
+        } catch (pollErr) {
+          clearInterval(pollInterval);
+          setLoading(false);
+        }
+      }, 500);
+    } catch (err) {
+      setLoading(false);
+    }
   };
 
   const addToCart = async () => {

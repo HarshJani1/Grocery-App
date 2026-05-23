@@ -1,0 +1,8 @@
+flask
+waitress
+pandas
+mlxtend
+py_eureka_client
+nltk
+pytz
+pika
