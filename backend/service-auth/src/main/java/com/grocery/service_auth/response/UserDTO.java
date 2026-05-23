@@ -1,7 +1,6 @@
 package com.grocery.service_auth.response;
 
 import com.grocery.service_auth.entity.Role;
-import jakarta.persistence.*;
 
 public class UserDTO {
     private String username;
@@ -16,7 +15,7 @@ public class UserDTO {
 
     private String token;
 
-    public UserDTO( String username, String email, String phoneNumber, String address, Role role, String token) {
+    public UserDTO(String username, String email, String phoneNumber, String address, Role role, String token) {
 
         this.username = username;
         this.email = email;
@@ -25,7 +24,6 @@ public class UserDTO {
         this.role = role;
         this.token = token;
     }
-
 
     public String getUsername() {
         return username;

@@ -8,10 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -21,11 +18,10 @@ public class UserServiceImpl implements UserService {
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     UserRepository userRepository;
+
     public UserServiceImpl(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
-
-
 
     @Override
     public List<User> getUsers() {
@@ -48,7 +44,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User updateUser(UserDTO product,String email) {
+    public User updateUser(UserDTO product, String email) {
         log.info("Updating user | email={}", email);
         try {
             User user = userRepository.findByEmail(email);
@@ -81,7 +77,5 @@ public class UserServiceImpl implements UserService {
             throw e;
         }
     }
-
-
 
 }

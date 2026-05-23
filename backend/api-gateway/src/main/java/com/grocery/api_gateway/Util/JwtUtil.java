@@ -1,7 +1,7 @@
 package com.grocery.api_gateway.Util;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
@@ -18,7 +18,6 @@ public class JwtUtil {
 
     public static final String SECRET = "5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437";
 
-
     public void validateToken(final String token) {
         log.debug("Validating JWT token at gateway");
         try {
@@ -29,8 +28,6 @@ public class JwtUtil {
             throw e;
         }
     }
-
-
 
     private Key getSignKey() {
         byte[] keyBytes = Decoders.BASE64.decode(SECRET);
@@ -44,7 +41,7 @@ public class JwtUtil {
         return email;
     }
 
-    public <T> T extractClaim(final String token, Function<Claims,T> claimsResolver) {
+    public <T> T extractClaim(final String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }

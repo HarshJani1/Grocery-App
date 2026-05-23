@@ -5,7 +5,6 @@ import com.grocery.service_cart.DTO.Product;
 import com.grocery.service_cart.OpenFeign.ProductController;
 import com.grocery.service_cart.entity.CartItem;
 import com.grocery.service_cart.repository.CartItemRepository;
-import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -22,7 +21,7 @@ public class CartItemServiceImpl implements CartItemService {
     private final ProductController productController;
 
     public CartItemServiceImpl(CartItemRepository cartItemRepository,
-                               ProductController productController) {
+            ProductController productController) {
         this.cartItemRepository = cartItemRepository;
         this.productController = productController;
     }
@@ -53,7 +52,8 @@ public class CartItemServiceImpl implements CartItemService {
             item.setQuantity(quantity);
 
             log.info("Cart item created successfully | product={} | price={}", prod.getName(), prod.getPrice());
-            // DO NOT save here. Return transient CartItem and let Cart save cascade persist it.
+            // DO NOT save here. Return transient CartItem and let Cart save cascade persist
+            // it.
             return item;
         } catch (Exception e) {
             log.error("Failed to create cart item | product={} | error={}", productName, e.getMessage(), e);
@@ -61,14 +61,13 @@ public class CartItemServiceImpl implements CartItemService {
         }
     }
 
-
     @Override
     public Optional<CartItem> findByProductName(String productName) {
         log.debug("Finding cart item by product name | product={}", productName);
-        // return repository result if you want to look up persisted items (but careful — these items likely already belong to a cart)
+        // return repository result if you want to look up persisted items (but careful
+        // — these items likely already belong to a cart)
         return cartItemRepository.findCartItemByName(productName);
     }
-
 
     @Override
     public CartItem updateQuantity(String productName, int quantity) {
@@ -84,8 +83,7 @@ public class CartItemServiceImpl implements CartItemService {
                 cartItemRepository.delete(item);
                 log.info("Cart item deleted (quantity <= 0) | product={}", productName);
                 throw new IllegalArgumentException(
-                        "Quantity must be > 0, item deleted: " + productName
-                );
+                        "Quantity must be > 0, item deleted: " + productName);
             }
 
             item.setQuantity(quantity);
