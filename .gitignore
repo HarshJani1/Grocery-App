@@ -36,3 +36,11 @@ Thumbs.db
 .agents/workflows
 
 graphify-out
+
+# Application configuration files (use .sample files for templates)
+**/application.properties
+**/application.yml
+**/application.yaml
+!**/application.properties.sample
+!**/application.yml.sample
+!**/application.yaml.sample

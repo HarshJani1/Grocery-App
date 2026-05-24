@@ -40,7 +40,7 @@ spring:
       # Service discovery (Eureka) locator
       discovery:
         locator:
-          enabled: true
+          enabled: false
           lower-case-service-id: true
 
       # Global rate limiter applied to ALL routes
@@ -63,31 +63,72 @@ spring:
           uri: lb://SERVICE-AUTH
           predicates:
             - Path=/service-auth/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: authService
+                fallbackUri: forward:/fallback/auth-service
         - id: user-service
           uri: lb://SERVICE-USER
           predicates:
             - Path=/service-user/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: userService
+                fallbackUri: forward:/fallback/user-service
         - id: product-service
           uri: lb://SERVICE-PRODUCT
           predicates:
             - Path=/service-product/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: productService
+                fallbackUri: forward:/fallback/product-service
         - id: service-ml
           uri: lb://service-ml
           predicates:
             - Path=/service-ml/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: mlService
+                fallbackUri: forward:/fallback/ml-service
         - id: cart-service
           uri: lb://SERVICE-CART
           predicates:
             - Path=/service-cart/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: cartService
+                fallbackUri: forward:/fallback/cart-service
         - id: email-service
           uri: lb://SERVICE-EMAIL
           predicates:
             - Path=/service-email/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: emailService
+                fallbackUri: forward:/fallback/email-service
 
       # HTTP client timeouts
       httpclient:
         connect-timeout: 30000
         response-timeout: 30s
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
 
 eureka:
   client:
@@ -97,6 +138,9 @@ eureka:
     fetch-registry: true
 
 management:
+  health:
+    circuitbreakers:
+      enabled: true
   endpoints:
     web:
       exposure:
