@@ -43,7 +43,7 @@ public class EmailService {
 
             mailSender.send(message);
             log.info("Welcome email sent successfully | to={}", event.getEmail());
-        } catch (MessagingException e) {
+        } catch (Exception e) {
             log.error("Failed to send welcome email | to={} | error={}", event.getEmail(), e.getMessage(), e);
             throw new RuntimeException("Failed to send welcome email", e);
         }
@@ -67,7 +67,7 @@ public class EmailService {
 
             mailSender.send(message);
             log.info("Bill email sent successfully | to={} | total={}", event.getEmail(), event.getTotalAmount());
-        } catch (MessagingException e) {
+        } catch (Exception e) {
             log.error("Failed to send bill email | to={} | error={}", event.getEmail(), e.getMessage(), e);
             throw new RuntimeException("Failed to send bill email", e);
         }
