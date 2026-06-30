@@ -98,15 +98,15 @@ def log_debug(message, status_code="N/A"):
 # ==================== APP INIT ====================
 app = Flask(__name__)
 
-EUREKA_SERVER = "http://localhost:8761/eureka"
-SERVICE_PORT = 5001
+EUREKA_SERVER = os.environ.get("EUREKA_SERVER_URL", "http://localhost:8761/eureka")
+SERVICE_PORT = int(os.environ.get("SERVICE_PORT", "5001"))
 
 log_info("Initializing Eureka client registration", "N/A")
 eureka_client.init(
     eureka_server=EUREKA_SERVER,
     app_name="SERVICE-ML",
     instance_port=SERVICE_PORT,
-    instance_host="localhost"
+    instance_host=os.environ.get("EUREKA_INSTANCE_HOST", "localhost")
 )
 log_info("Eureka client registered successfully | serviceName=SERVICE-ML | port={}".format(SERVICE_PORT), "200")
 
@@ -188,7 +188,7 @@ def init_recommendation_model():
 threading.Thread(target=init_recommendation_model, daemon=True).start()
 
 # ==================== RABBITMQ & ASYNC TASK SETUP ====================
-RABBITMQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
+RABBITMQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")  # Override via env in Docker
 QUEUE_NAME = "ml_analysis_queue"
 TASK_RESULTS = {}
 

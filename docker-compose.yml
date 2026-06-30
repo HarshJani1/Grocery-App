@@ -1,0 +1,290 @@
+services:
+
+  # ══════════════════════════════════════════════════
+  #  INFRASTRUCTURE
+  # ══════════════════════════════════════════════════
+
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234@password
+      MYSQL_DATABASE: groceryApp
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p1234@password"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - grocery-net
+
+  redis-cache:
+    image: redis:7-alpine
+    container_name: redis-cache
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - grocery-net
+
+  rabbitmq-broker:
+    image: rabbitmq:3.13-management-alpine
+    container_name: rabbitmq-broker
+    restart: unless-stopped
+    ports:
+      - "5672:5672"    # AMQP
+      - "15672:15672"  # Management UI (guest/guest)
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - grocery-net
+
+  # ══════════════════════════════════════════════════
+  #  SERVICE DISCOVERY
+  # ══════════════════════════════════════════════════
+
+  service-registry:
+    build:
+      context: ./backend/service-registry
+      dockerfile: Dockerfile
+    container_name: service-registry
+    restart: unless-stopped
+    ports:
+      - "8761:8761"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8761/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - grocery-net
+
+  # ══════════════════════════════════════════════════
+  #  BACKEND MICROSERVICES
+  # ══════════════════════════════════════════════════
+
+  service-auth:
+    build:
+      context: ./backend/service-auth
+      dockerfile: Dockerfile
+    container_name: service-auth
+    restart: unless-stopped
+    ports:
+      - "8095:8095"
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      rabbitmq-broker:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+    environment:
+      LOG_DIR: /app/logs
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/groceryApp?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 1234@password
+      SPRING_DATA_REDIS_HOST: redis-cache
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_RABBITMQ_HOST: rabbitmq-broker
+      SPRING_RABBITMQ_PORT: 5672
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-registry:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+    networks:
+      - grocery-net
+
+  service-user:
+    build:
+      context: ./backend/service-user
+      dockerfile: Dockerfile
+    container_name: service-user
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+    environment:
+      LOG_DIR: /app/logs
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/groceryApp?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 1234@password
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-registry:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+    networks:
+      - grocery-net
+
+  service-product:
+    build:
+      context: ./backend/service-product
+      dockerfile: Dockerfile
+    container_name: service-product
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+    environment:
+      LOG_DIR: /app/logs
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/groceryApp?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 1234@password
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-registry:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+    networks:
+      - grocery-net
+
+  service-cart:
+    build:
+      context: ./backend/service-cart
+      dockerfile: Dockerfile
+    container_name: service-cart
+    restart: unless-stopped
+    ports:
+      - "8098:8098"
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      rabbitmq-broker:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+      service-product:
+        condition: service_started
+    environment:
+      LOG_DIR: /app/logs
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/groceryApp?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 1234@password
+      SPRING_RABBITMQ_HOST: rabbitmq-broker
+      SPRING_RABBITMQ_PORT: 5672
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-registry:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+    networks:
+      - grocery-net
+
+  service-email:
+    build:
+      context: ./backend/service-email
+      dockerfile: Dockerfile
+    container_name: service-email
+    restart: unless-stopped
+    ports:
+      - "8085:8085"
+    depends_on:
+      rabbitmq-broker:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq-broker
+      SPRING_RABBITMQ_PORT: 5672
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-registry:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+      # Override SMTP settings here if needed:
+      # SPRING_MAIL_HOST: smtp.gmail.com
+      # SPRING_MAIL_USERNAME: your-email@gmail.com
+      # SPRING_MAIL_PASSWORD: your-app-password
+    networks:
+      - grocery-net
+
+  # ══════════════════════════════════════════════════
+  #  ML SERVICE
+  # ══════════════════════════════════════════════════
+
+  flask-api:
+    build:
+      context: ./backend/flask-api
+      dockerfile: Dockerfile
+    container_name: flask-api
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    depends_on:
+      rabbitmq-broker:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+    environment:
+      RABBITMQ_HOST: rabbitmq-broker
+      # Override Eureka server URL for the Python client
+      EUREKA_SERVER_URL: http://service-registry:8761/eureka
+      EUREKA_INSTANCE_HOST: flask-api
+    networks:
+      - grocery-net
+
+  # ══════════════════════════════════════════════════
+  #  API GATEWAY
+  # ══════════════════════════════════════════════════
+
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    restart: unless-stopped
+    ports:
+      - "8765:8765"
+    depends_on:
+      redis-cache:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+    environment:
+      LOG_DIR: /app/logs
+      SPRING_DATA_REDIS_HOST: redis-cache
+      SPRING_DATA_REDIS_PORT: 6379
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-registry:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+    networks:
+      - grocery-net
+
+  # ══════════════════════════════════════════════════
+  #  FRONTEND
+  # ══════════════════════════════════════════════════
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - grocery-net
+
+# ══════════════════════════════════════════════════
+#  NETWORKS & VOLUMES
+# ══════════════════════════════════════════════════
+
+volumes:
+  mysql_data:
+
+networks:
+  grocery-net:
+    driver: bridge
