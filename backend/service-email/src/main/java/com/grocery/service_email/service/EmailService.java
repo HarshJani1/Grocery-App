@@ -3,7 +3,6 @@ package com.grocery.service_email.service;
 import com.grocery.service_email.dto.CheckoutEvent;
 import com.grocery.service_email.dto.CheckoutItemDTO;
 import com.grocery.service_email.dto.WelcomeEvent;
-import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,10 +24,6 @@ public class EmailService {
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
-
-    // ──────────────────────────────────────────────────────────────
-    // Welcome Email
-    // ──────────────────────────────────────────────────────────────
 
     public void sendWelcomeEmail(WelcomeEvent event) {
         log.info("Sending welcome email | to={}", event.getEmail());

@@ -6,3 +6,6 @@ py_eureka_client
 nltk
 pytz
 pika
+pytest
+pytest-mock
+
